@@ -1,0 +1,118 @@
+// POST /api/amMatch - heartbeat + run the AI matcher + return the caller's match state.
+import { AM_MATCH_CONFIG, amBuildBlockSet, amCreateCooldownIndex, amNormalizeUser } from '../shared/amMatchScore.js';
+import { amPlanMatches } from '../shared/amGroupBuilder.js';
+import { amAdmin, amDbError, amHandler, amRequireUser } from '../server/amServer.js';
+
+const PROFILE_FIELDS =
+  'id, name, avatar_url, school, languages, weak_subjects, strong_subjects, rating_avg, rating_count, success_count, sessions_count, status, suspended_until';
+
+async function amLoadHistory(admin, userIds, since) {
+  const { data, error } = await admin
+    .from('proposal_members')
+    .select('proposal_id, user_id, accepted, match_proposals!inner(id, created_at, status, mode)')
+    .in('user_id', userIds)
+    .gte('match_proposals.created_at', since);
+  amDbError(error);
+  const byId = new Map();
+  for (const row of data ?? []) {
+    const p = row.match_proposals;
+    if (!byId.has(p.id)) byId.set(p.id, { id: p.id, createdAt: p.created_at, status: p.status, mode: p.mode, members: [] });
+    byId.get(p.id).members.push({ userId: row.user_id, accepted: row.accepted });
+  }
+  return [...byId.values()];
+}
+
+async function amRunMatcher(admin, mode) {
+  const freshSince = new Date(Date.now() - AM_MATCH_CONFIG.staleMs).toISOString();
+  const { data: queue, error } = await admin
+    .from('match_queue')
+    .select('*')
+    .eq('mode', mode)
+    .eq('status', 'waiting')
+    .gte('last_seen', freshSince)
+    .order('joined_at', { ascending: true })
+    .limit(200);
+  amDbError(error);
+  if (!queue || queue.length < 2) return { waiting: queue?.length ?? 0 };
+
+  const ids = queue.map((q) => q.user_id);
+  const [profilesRes, blocksRes, history] = await Promise.all([
+    admin.from('profiles').select(PROFILE_FIELDS).in('id', ids),
+    admin.from('blocks').select('blocker_id, blocked_id').in('blocker_id', ids).in('blocked_id', ids),
+    amLoadHistory(admin, ids, new Date(Date.now() - AM_MATCH_CONFIG.cooldownMs).toISOString()),
+  ]);
+  amDbError(profilesRes.error);
+  amDbError(blocksRes.error);
+
+  const profiles = new Map(profilesRes.data.map((p) => [p.id, p]));
+  const users = queue.filter((q) => profiles.has(q.user_id)).map((q) => amNormalizeUser(q, profiles.get(q.user_id)));
+  const ctx = {
+    now: Date.now(),
+    blockSet: amBuildBlockSet(blocksRes.data),
+    cooldowns: amCreateCooldownIndex(history),
+  };
+
+  const plan = amPlanMatches(users, ctx);
+  for (const proposal of plan) {
+    const { error: claimError } = await admin.rpc('am_claim_proposal', {
+      p_mode: proposal.mode,
+      p_members: proposal.members.map((m) => ({ user_id: m.userId, teach: m.teach, learn: m.learn })),
+    });
+    if (claimError) console.error('[match] claim failed', claimError);
+  }
+  return { waiting: queue.length };
+}
+
+async function amProposalView(admin, proposalId) {
+  const { data: proposal, error } = await admin
+    .from('match_proposals')
+    .select('id, mode, status, created_at, expires_at')
+    .eq('id', proposalId)
+    .maybeSingle();
+  amDbError(error);
+  if (!proposal) return null;
+  const { data: members, error: mErr } = await admin
+    .from('proposal_members')
+    .select('user_id, accepted, teach_subjects, learn_subjects')
+    .eq('proposal_id', proposalId);
+  amDbError(mErr);
+  const { data: profiles, error: pErr } = await admin
+    .from('profiles')
+    .select('id, name, avatar_url, school, languages, weak_subjects, strong_subjects, rating_avg, rating_count')
+    .in('id', members.map((m) => m.user_id));
+  amDbError(pErr);
+  const byId = new Map(profiles.map((p) => [p.id, p]));
+  return { ...proposal, members: members.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null })) };
+}
+
+export default amHandler(async ({ req }) => {
+  const admin = amAdmin();
+  const user = await amRequireUser(req, admin);
+
+  await admin.rpc('am_expire_proposals');
+
+  const { data: me, error } = await admin
+    .from('match_queue')
+    .update({ last_seen: new Date().toISOString() })
+    .eq('user_id', user.id)
+    .select('*')
+    .maybeSingle();
+  amDbError(error);
+  if (!me) return { status: 'idle' };
+
+  let waiting = 0;
+  if (me.status === 'waiting') {
+    ({ waiting } = await amRunMatcher(admin, me.mode));
+  }
+
+  const { data: current } = await admin.from('match_queue').select('*').eq('user_id', user.id).maybeSingle();
+  if (!current) return { status: 'idle' };
+  const result = {
+    status: current.status,
+    mode: current.mode,
+    joinedAt: current.joined_at,
+    waiting,
+  };
+  if (current.proposal_id) result.proposal = await amProposalView(admin, current.proposal_id);
+  return result;
+});
