@@ -1,10 +1,14 @@
 import { Suspense, lazy } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { RotateCw, TriangleAlert } from 'lucide-react';
 import { useAmAuth } from './lib/amAuth.jsx';
+import { useAmMastery } from './lib/amMastery.jsx';
 import { amSupabaseConfigured } from './lib/amSupabase.js';
 import { useAmUnread } from './lib/amRealtime.js';
 import { AmLayout } from './components/amLayout.jsx';
 import { AmFullScreenLoader } from './components/amLogo.jsx';
+import { AmEmptyState } from './components/amEmptyState.jsx';
+import { AmButton } from './components/amButton.jsx';
 import { AmInviteListener } from './components/amInviteListener.jsx';
 import { AmSetupNotice } from './pages/amSetupNotice.jsx';
 
@@ -20,6 +24,8 @@ const AmThreadPage = lazy(() => import('./pages/amThreadPage.jsx'));
 const AmProfilePage = lazy(() => import('./pages/amProfilePage.jsx'));
 const AmSuspendedPage = lazy(() => import('./pages/amSuspendedPage.jsx'));
 const AmUiPreviewPage = lazy(() => import('./pages/amUiPreviewPage.jsx'));
+const AmDiagnosticPage = lazy(() => import('./pages/amDiagnosticPage.jsx'));
+const AmSkillGpsPage = lazy(() => import('./pages/amSkillGpsPage.jsx'));
 
 /** Gate: signed in -> profile complete -> not suspended. */
 function AmGuard({ allowIncomplete = false, allowSuspended = false }) {
@@ -30,6 +36,31 @@ function AmGuard({ allowIncomplete = false, allowSuspended = false }) {
   if (!allowSuspended && isSuspended) return <Navigate to="/suspended" replace />;
   if (!allowIncomplete && !profileComplete) return <Navigate to="/onboarding" replace />;
   return <Outlet />;
+}
+
+/**
+ * Gate for /match: the user needs at least one Mastery_Record (completed diagnostic).
+ * Fails closed: a load error shows a retry card instead of entering /match.
+ */
+export function AmDiagnosticGuard({ children }) {
+  const { count, loading, error, refresh } = useAmMastery();
+  if (loading) return <AmFullScreenLoader />;
+  if (error) {
+    return (
+      <AmEmptyState
+        icon={TriangleAlert}
+        title="Couldn't load your diagnostic results"
+        description="We need your results before matching. Check your connection and try again."
+        action={
+          <AmButton icon={RotateCw} onClick={() => refresh()}>
+            Try again
+          </AmButton>
+        }
+      />
+    );
+  }
+  if (!count) return <Navigate to="/diagnostic" replace state={{ from: '/match', reason: 'diagnostic-required' }} />;
+  return children ?? <Outlet />;
 }
 
 function AmPublicOnly() {
@@ -81,7 +112,11 @@ export default function AmApp() {
             <Route path="/session/:sessionId" element={<AmSessionPage />} />
             <Route element={<AmShell />}>
               <Route path="/home" element={<AmHomePage />} />
-              <Route path="/match" element={<AmMatchPage />} />
+              <Route path="/diagnostic" element={<AmDiagnosticPage />} />
+              <Route path="/skillgps" element={<AmSkillGpsPage />} />
+              <Route element={<AmDiagnosticGuard />}>
+                <Route path="/match" element={<AmMatchPage />} />
+              </Route>
               <Route path="/rate/:sessionId" element={<AmRatePage />} />
               <Route path="/messages" element={<AmMessagesPage />} />
               <Route path="/messages/:conversationId" element={<AmThreadPage />} />

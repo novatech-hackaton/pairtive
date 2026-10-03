@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowRight, Handshake, Lightbulb, MessageCircle, Pencil, Sparkles, Star, Target, Users, Video } from 'lucide-react';
+import { ArrowRight, Handshake, Lightbulb, MessageCircle, Pencil, RotateCcw, Sparkles, Star, Target, Users, Video } from 'lucide-react';
 import { useAmAuth } from '../lib/amAuth.jsx';
 import { amFirstName } from '../lib/amFormat.js';
 import { AmButton } from '../components/amButton.jsx';
 import { AmCard, AmCardTitle } from '../components/amCard.jsx';
+import { AmSkillSummaryCard } from '../components/amSkillSummaryCard.jsx';
 import { AmSubjectChip } from '../components/amSubjectChip.jsx';
 import { AmWarningsBanner } from '../components/amWarningsBanner.jsx';
 
@@ -87,12 +88,22 @@ export default function AmHomePage() {
                 ))}
               </div>
             </div>
-            <Link to="/profile" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
-              <Pencil className="size-3.5" aria-hidden /> Edit subjects
-            </Link>
+            {profile.subjects_source === 'diagnostic' ? (
+              <Link to="/diagnostic" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
+                <RotateCcw className="size-3.5" aria-hidden /> Retake diagnostic
+              </Link>
+            ) : (
+              <Link to="/profile" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
+                <Pencil className="size-3.5" aria-hidden /> Edit subjects
+              </Link>
+            )}
           </div>
         </div>
       </motion.section>
+
+      <div className="mt-6">
+        <AmSkillSummaryCard />
+      </div>
 
       <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Your stats">
         <AmStat icon={Star} label="Average rating" value={profile.rating_count ? Number(profile.rating_avg).toFixed(1) : 'New'} tone="bg-amber-300/15 text-amber-300" />

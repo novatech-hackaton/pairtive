@@ -22,6 +22,9 @@ export const AM_MATCH_CONFIG = Object.freeze({
   peersMin: 3,
   peersMax: 5,
   proposalTtlMs: 15_000,
+  // Shared-strong ("practice together") matching
+  sharedStrongFull: 3, // shared strong labels needed for a full practice score
+  sharedStrongFactor: 0.75, // practice reciprocity cap, below a perfect two-way swap
 });
 
 export const AM_MODES = Object.freeze({ buddy: 'buddy', peers: 'peers' });
@@ -79,6 +82,15 @@ export function amCoverage(learner, teacher) {
   const strong = new Set(teacher.strong ?? []);
   return learner.weak.filter((s) => strong.has(s)).length / learner.weak.length;
 }
+
+/** Deduped Skill_Labels strong for both a and b, in a's order (Shared_Strong_Overlap). */
+export function amSharedStrong(a, b) {
+  const bs = new Set(b.strong ?? []);
+  return [...new Set((a.strong ?? []).filter((s) => bs.has(s)))];
+}
+
+/** Practice score for `n` shared strong labels, in [0, 1] and non-decreasing in n. */
+export const amPracticeScore = (n, cfg = AM_MATCH_CONFIG) => Math.min(1, n / cfg.sharedStrongFull);
 
 export function amSharesLanguage(a, b) {
   const set = new Set((a.languages ?? []).map((l) => l.toLowerCase()));
@@ -161,7 +173,13 @@ export function amHardFilter(a, b, ctx, opts = {}) {
   if (blockSet?.has(amPairKey(a.id, b.id))) return { ok: false, reason: 'blocked' };
   if (!amSchoolOk(a, b)) return { ok: false, reason: 'school' };
   if (cooldowns?.inPairCooldown(a.id, b.id, now, mode)) return { ok: false, reason: 'cooldown' };
-  if (opts.requireCoverage !== false && amCoverage(a, b) === 0 && amCoverage(b, a) === 0) {
+  // A shared strong label is enough overlap on its own ("practice together").
+  if (
+    opts.requireCoverage !== false &&
+    amCoverage(a, b) === 0 &&
+    amCoverage(b, a) === 0 &&
+    amSharedStrong(a, b).length === 0
+  ) {
     return { ok: false, reason: 'no-overlap' };
   }
   return { ok: true };
@@ -178,10 +196,17 @@ export function amScoreCandidate(seed, cand, ctx, cfg = AM_MATCH_CONFIG) {
   const covSeed = amCoverage(seed, cand);
   const covCand = amCoverage(cand, seed);
   const twoWay = covSeed > 0 && covCand > 0;
-  if (!twoWay && !amOneWayAllowed([seed, cand], ctx.now, cfg)) return null;
+  const shared = amSharedStrong(seed, cand);
+  // Shared-strong pairs are eligible immediately; relaxAfterMs only gates one-way coverage.
+  if (!twoWay && shared.length === 0 && !amOneWayAllowed([seed, cand], ctx.now, cfg)) return null;
+
+  // Empty overlap keeps the legacy expression exactly, so legacy scores stay bit-identical.
+  const comp = (covSeed + covCand) / 2;
+  const reciprocity =
+    shared.length === 0 ? comp : Math.max(comp, cfg.sharedStrongFactor * amPracticeScore(shared.length, cfg));
 
   const parts = {
-    reciprocity: (covSeed + covCand) / 2,
+    reciprocity,
     rating: amSmoothedRating(cand, cfg),
     success: amSmoothedSuccess(cand, cfg),
     wait: clamp01(amWaitMs(cand, ctx.now) / cfg.waitFullMs),
@@ -194,7 +219,7 @@ export function amScoreCandidate(seed, cand, ctx, cfg = AM_MATCH_CONFIG) {
     w.success * parts.success +
     w.wait * parts.wait +
     w.language * parts.language;
-  return { score, parts, twoWay };
+  return { score, parts, twoWay, shared };
 }
 
 export function amRankCandidates(seed, candidates, ctx, cfg = AM_MATCH_CONFIG) {
@@ -208,13 +233,14 @@ export function amBestBuddy(seed, candidates, ctx, cfg = AM_MATCH_CONFIG) {
   return amRankCandidates(seed, candidates, ctx, cfg)[0] ?? null;
 }
 
-/** What a member teaches / learns inside a given group. */
+/** What a member teaches / learns / practices (shared strengths) inside a given group. */
 export function amTeachLearn(member, others) {
   const othersWeak = new Set(others.flatMap((o) => o.weak ?? []));
   const othersStrong = new Set(others.flatMap((o) => o.strong ?? []));
   return {
     teach: (member.strong ?? []).filter((s) => othersWeak.has(s)),
     learn: (member.weak ?? []).filter((s) => othersStrong.has(s)),
+    practice: (member.strong ?? []).filter((s) => othersStrong.has(s)),
   };
 }
 
@@ -223,17 +249,22 @@ const amJoinNames = (names) =>
 
 /**
  * Friendly preview copy, e.g.
- *   { teach: [{ subject: 'Math', names: ['Ana'], text: "You'll help Ana with Math" }], learn: [...] }
+ *   { teach: [{ subject: 'Math', names: ['Ana'], text: "You'll help Ana with Math" }], learn: [...],
+ *     practice: [{ subject: 'Algebra', names: ['Ben'], text: 'Practice Algebra together with Ben' }] }
  */
 export function amTeachLearnCopy(me, others) {
   const teachMap = new Map();
   const learnMap = new Map();
+  const practiceMap = new Map();
   for (const o of others) {
     for (const s of me.strong ?? []) {
       if ((o.weak ?? []).includes(s)) teachMap.set(s, [...(teachMap.get(s) ?? []), o.name]);
     }
     for (const s of me.weak ?? []) {
       if ((o.strong ?? []).includes(s)) learnMap.set(s, [...(learnMap.get(s) ?? []), o.name]);
+    }
+    for (const s of me.strong ?? []) {
+      if ((o.strong ?? []).includes(s)) practiceMap.set(s, [...(practiceMap.get(s) ?? []), o.name]);
     }
   }
   const teach = [...teachMap].map(([subject, names]) => ({
@@ -246,9 +277,15 @@ export function amTeachLearnCopy(me, others) {
     names,
     text: `${amJoinNames(names)} will help you with ${subject}`,
   }));
+  const practice = [...practiceMap].map(([subject, names]) => ({
+    subject,
+    names,
+    text: `Practice ${subject} together with ${amJoinNames(names)}`,
+  }));
   let headline = 'Study together and swap what you know';
   if (teach.length && learn.length) headline = "A perfect swap: you teach, they teach you back";
   else if (teach.length) headline = 'Your turn to shine: you get to be the tutor';
   else if (learn.length) headline = "Time to level up: you're learning this round";
-  return { teach, learn, headline };
+  else if (practice.length) headline = 'Same strengths: practice together and push each other';
+  return { teach, learn, practice, headline };
 }

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Check, Clock, Globe, GraduationCap, Handshake, Lightbulb, SkipForward, Sparkles } from 'lucide-react';
+import { Check, Clock, Globe, GraduationCap, Handshake, Lightbulb, SkipForward, Sparkles, Users } from 'lucide-react';
 import { amTeachLearnCopy } from '../../shared/amMatchScore.js';
 import { AmAvatar } from './amAvatar.jsx';
 import { AmButton } from './amButton.jsx';
@@ -8,14 +8,26 @@ import { AmRatingBadge } from './amStars.jsx';
 import { AmSubjectIcon } from './amSubjectChip.jsx';
 
 function AmCopyRow({ item, tone }) {
+  // Highlight the subject where the copy template puts it ("... with Math" or "Practice Algebra together ..."),
+  // so a partner name that contains the subject (e.g. "Mathilda") is not highlighted instead.
+  const lead = 'Practice ' + item.subject + ' ';
+  const tail = ' ' + item.subject;
+  const at = item.text.startsWith(lead)
+    ? 'Practice'.length
+    : item.text.endsWith(tail)
+      ? item.text.length - tail.length
+      : item.text.indexOf(tail);
+  const before = at === -1 ? item.text : item.text.slice(0, at + 1);
+  const after = at === -1 ? '' : item.text.slice(at + 1 + item.subject.length);
   return (
     <li className="flex items-center gap-3 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/8">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/6">
         <AmSubjectIcon subject={item.subject} className="size-5" />
       </span>
       <span className="text-sm text-slate-200">
-        {item.text.replace(' ' + item.subject, ' ')}
+        {before}
         <strong className={tone}>{item.subject}</strong>
+        {after}
       </span>
     </li>
   );
@@ -33,6 +45,7 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
     strong: m.profile?.strong_subjects ?? [],
   }));
   const copy = amTeachLearnCopy({ weak: me.weak_subjects, strong: me.strong_subjects }, otherProfiles);
+  const practice = copy.practice ?? [];
   const myLangs = new Set((me.languages ?? []).map((l) => l.toLowerCase()));
   const waitingOn = others.filter((m) => m.accepted !== true).map((m) => m.profile?.name ?? 'Student');
 
@@ -116,6 +129,17 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
           </ul>
         </div>
       </div>
+
+      {practice.length > 0 ? (
+        <div className="relative mt-4">
+          <p className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-cyan-300 uppercase">
+            <Users className="size-4" aria-hidden /> You'll practice together
+          </p>
+          <ul className="space-y-2">
+            {practice.map((t) => <AmCopyRow key={t.subject} item={t} tone="text-cyan-300" />)}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="relative mt-6">
         {myResponse === true ? (

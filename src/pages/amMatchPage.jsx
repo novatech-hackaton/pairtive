@@ -47,6 +47,11 @@ export default function AmMatchPage() {
     }
   }, [q.phase, q.sessionId, navigate]);
 
+  // amMatch rejects users with zero mastery records; send them to take the diagnostic.
+  useEffect(() => {
+    if (q.errorReason === 'diagnostic-required') navigate('/diagnostic', { replace: true });
+  }, [q.errorReason, navigate]);
+
   useEffect(() => {
     if (q.phase === 'searching') searchStart.current = Date.now();
   }, [q.phase]);

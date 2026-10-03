@@ -17,13 +17,27 @@ serverless API functions. Every source file is prefixed with "am".
 - OmeTV-style Stop/Next, post-session ratings (stars, tags, comment) feeding the matcher.
 - Full messenger: lazy, de-duplicated threads, image/file sharing, and a Reconnect button that starts a call directly.
 - Reports with immediate blocking and automated AI moderation (NSFWJS for images, TensorFlow toxicity for text, rules for spam/no-show), a strike ladder, and timed suspensions. No admin page.
+- Diagnostic + SkillGPS: a short diagnostic quiz scores each answer and estimates per-skill mastery with Bayesian Knowledge Tracing (BKT). The SkillGPS page shows mastery bars, a summary and study recommendations.
+
+## Diagnostic and SkillGPS
+
+1. The user takes the diagnostic (\u0060/diagnostic\u0060). Questions come from the \u0060diagnostic_questions\u0060 table (seeded by the migrations below).
+2. For each topic, the client posts the scored response sequence to \u0060/api/amPredict\u0060, which runs the Node BKT port (\u0060shared/amBkt.js\u0060 with fitted parameters in \u0060shared/amBktParams.js\u0060) and returns the mastery estimate.
+3. The client saves one Mastery_Record per topic (\u0060student_topic_mastery\u0060), and the SkillGPS page (\u0060/skillgps\u0060) shows mastery per topic plus recommendations.
+4. The Mastery_Bridge (\u0060shared/amMasteryBridge.js\u0060, applied in the database by \u0060am_apply_mastery_bridge()\u0060) turns mastered topics into the profile's strong subjects and struggling topics into weak subjects.
+5. The matcher pairs users who share strong subjects, using these diagnostic-sourced profiles.
+
+\u0060/match\u0060 requires a completed diagnostic. Users without Mastery_Records are redirected to \u0060/diagnostic\u0060, and \u0060/api/amMatch\u0060 also rejects them on the server (403 \u0060diagnostic-required\u0060).
+
+\u0060POST /api/amPredict\u0060 requires a signed-in user (\u0060Authorization: Bearer <supabase access token>\u0060), validates the body (10 KB limit, known \u0060topic_id\u0060), and stores nothing. It is plain JavaScript; no Python runs in production.
 
 ## Project layout
 
 \u0060\u0060\u0060
-api/        Vercel serverless functions (amMatch, amStartSession, amSessionToken, amReportVerify)
+api/        Vercel serverless functions (amMatch, amPredict, amStartSession, amSessionToken, amReportVerify)
 server/     Server-only helpers (Supabase admin, Daily REST, AI model loaders)
-shared/     Pure, tested logic shared by client + server (matching, moderation, subjects, attachments)
+shared/     Pure, tested logic shared by client + server (matching, moderation, subjects, attachments, BKT, mastery)
+scripts/    Dev tooling (migration runner, match demo, BKT parameter extraction)
 src/        React app (amMain, amApp), lib/ (supabase, daily, media, recorder, notes, chat), components/, pages/
 supabase/   Timestamped SQL migrations (schema + RLS + RPCs)
 tests/      Migration tests (PGlite), API tests, real-model AI test
@@ -38,17 +52,39 @@ tests/      Migration tests (PGlite), API tests, real-model AI test
 5. Copy \u0060.env.example\u0060 to \u0060.env\u0060 and fill in the values.
 6. \u0060npm run dev\u0060 (the local server also emulates the \u0060/api\u0060 functions).
 
+### Migrations
+
+Apply the migrations in \u0060supabase/migrations/\u0060 in order, either in the SQL editor or with
+the runner:
+
+\u0060\u0060\u0060
+AM_DB_URL=postgresql://... node scripts/amMigrate.mjs
+\u0060\u0060\u0060
+
+The Diagnostic/SkillGPS feature adds two:
+
+- \u006020261003000007_am_diagnostic.sql\u0060 - programs/subjects/topics, diagnostic questions, attempts, answers and \u0060student_topic_mastery\u0060 tables, RLS, and the \u0060am_apply_mastery_bridge()\u0060 RPC
+- \u006020261003000008_am_diagnostic_seed.sql\u0060 - seed the BSCS program, its subjects and topics, and the diagnostic questions
+
+\u0060scripts/amBktExtract.py\u0060 is a dev-only helper that regenerates \u0060shared/amBktParams.js\u0060
+(and the parity fixture) from the original Python model. It is never deployed and is not
+needed to run the app.
+
 ### Environment variables
 
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | \u0060VITE_SUPABASE_URL\u0060 | client + server | Supabase project URL |
-| \u0060VITE_SUPABASE_ANON_KEY\u0060 | client + server | Supabase anon key |
-| \u0060SUPABASE_SERVICE_ROLE_KEY\u0060 | server only | Service role key for \u0060/api\u0060 (never in the client) |
+| \u0060VITE_SUPABASE_ANON_KEY\u0060 | client + server | Supabase publishable (anon) key; safe in the browser, RLS enforces access |
+| \u0060SUPABASE_URL\u0060 | server only | Supabase project URL for \u0060/api\u0060 (falls back to \u0060VITE_SUPABASE_URL\u0060) |
+| \u0060SUPABASE_SERVICE_ROLE_KEY\u0060 | server only | Supabase secret (service role) key for \u0060/api\u0060; bypasses RLS, never in the client |
 | \u0060DAILY_API_KEY\u0060 | server only | Daily REST key for creating rooms/tokens |
+| \u0060AM_DB_URL\u0060 | local only | Postgres connection string for \u0060scripts/amMigrate.mjs\u0060 |
 
-On Vercel, add all four under Project Settings -> Environment Variables. The two
-server-only secrets must never be exposed to the browser.
+On Vercel, add the Supabase and Daily variables under Project Settings -> Environment Variables.
+Server-only secrets must never be exposed to the browser, so never give them a \u0060VITE_\u0060 prefix.
+The app has no separate prediction or recommendation service URL; everything runs through
+\u0060/api\u0060 on the same origin.
 
 ## Scripts
 

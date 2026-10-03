@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { House, LogOut, MessageCircle, Sparkles, UserRound } from 'lucide-react';
+import { Compass, House, LogOut, MessageCircle, Sparkles, UserRound } from 'lucide-react';
 import { AmLogo } from './amLogo.jsx';
 import { AmAvatar } from './amAvatar.jsx';
 import { AmButton } from './amButton.jsx';
 
 const AM_NAV = [
   { to: '/home', label: 'Home', icon: House },
+  { to: '/skillgps', label: 'SkillGPS', icon: Compass },
   { to: '/match', label: 'Find match', icon: Sparkles },
   { to: '/messages', label: 'Messages', icon: MessageCircle },
   { to: '/profile', label: 'Profile', icon: UserRound },
@@ -69,7 +70,7 @@ export function AmLayout({ profile, unread = 0, onSignOut, children }) {
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 rounded-3xl glass-strong p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] shadow-glow md:hidden"
+        className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-3xl glass-strong p-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] shadow-glow md:hidden"
       >
         {AM_NAV.map((item) => (
           <NavLink

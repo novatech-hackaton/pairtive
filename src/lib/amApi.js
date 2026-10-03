@@ -13,6 +13,9 @@ export async function amApi(name, body = {}) {
   if (!res.ok) {
     const err = new Error(json.error || `Request failed (${res.status})`);
     err.status = res.status;
+    // Machine-readable details from AmHttpError extras (e.g. reason: 'diagnostic-required').
+    if (json.reason !== undefined) err.reason = json.reason;
+    if (json.fields !== undefined) err.fields = json.fields;
     throw err;
   }
   return json;

@@ -9,9 +9,15 @@ export function amFakeAdmin(tables = {}, storage = {}) {
     let payload;
     let single = null;
     let limit = Infinity;
+    let countMode = null;
+    let head = false;
     const rows = () => (db[table] ??= []).filter((r) => filters.every((f) => f(r)));
     const api = {
-      select() {
+      // `select(cols, { count: 'exact', head: true })` mirrors supabase-js: head queries
+      // resolve `{ count, data: null }`, otherwise `count` is returned alongside `data`.
+      select(_cols, opts = {}) {
+        if (opts.count) countMode = opts.count;
+        if (opts.head) head = true;
         return api;
       },
       insert(p) {
@@ -66,6 +72,7 @@ export function amFakeAdmin(tables = {}, storage = {}) {
       then(resolve, reject) {
         try {
           let data;
+          const extra = {};
           if (op === 'insert') {
             const list = Array.isArray(payload) ? payload : [payload];
             db[table].push(...list.map((r) => ({ ...r })));
@@ -81,11 +88,14 @@ export function amFakeAdmin(tables = {}, storage = {}) {
             db[table] = db[table].filter((r) => !hit.has(r));
             data = [...hit];
           } else {
-            data = rows().slice(0, limit);
+            const all = rows();
+            if (countMode && head) return resolve({ count: all.length, data: null, error: null });
+            data = all.slice(0, limit);
+            if (countMode) extra.count = all.length;
           }
           if (single) data = data[0] ?? null;
-          if (single === 'one' && !data) return resolve({ data: null, error: { message: 'not found' } });
-          resolve({ data, error: null });
+          if (single === 'one' && !data) return resolve({ ...extra, data: null, error: { message: 'not found' } });
+          resolve({ ...extra, data, error: null });
         } catch (e) {
           reject(e);
         }

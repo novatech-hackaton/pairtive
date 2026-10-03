@@ -66,6 +66,19 @@ export function amValidateBasics({ name = '', languages = [], school = '' } = {}
   return errors;
 }
 
+/**
+ * Diagnostic-derived arrays (written by the Mastery_Bridge): non-empty strings,
+ * no duplicates, weak and strong disjoint. No AM_SUBJECTS vocabulary or 1–3 count
+ * limits (Req 5.6). Returns an error message or null.
+ */
+export function amValidateDiagnosticSubjects(weak = [], strong = []) {
+  if (!Array.isArray(weak) || !Array.isArray(strong)) return 'Missing diagnostic results.';
+  if ([...weak, ...strong].some((s) => typeof s !== 'string' || !s.trim())) return 'Invalid topic.';
+  if (new Set(weak).size !== weak.length || new Set(strong).size !== strong.length) return 'Duplicate topic.';
+  if (weak.some((s) => strong.includes(s))) return "A topic can't be both strong and weak.";
+  return null;
+}
+
 export function amIsProfileComplete(profile) {
   if (!profile || !profile.onboarded) return false;
   const basics = amValidateBasics({
@@ -73,7 +86,12 @@ export function amIsProfileComplete(profile) {
     languages: profile.languages ?? [],
     school: profile.school ?? '',
   });
-  return Object.keys(basics).length === 0 && amValidateSubjects(profile.weak_subjects, profile.strong_subjects) === null;
+  // Diagnostic-derived arrays skip the onboarding vocabulary/count rules; onboarding path is unchanged (Req 5.9).
+  const subjectsError =
+    profile.subjects_source === 'diagnostic'
+      ? amValidateDiagnosticSubjects(profile.weak_subjects, profile.strong_subjects)
+      : amValidateSubjects(profile.weak_subjects, profile.strong_subjects);
+  return Object.keys(basics).length === 0 && subjectsError === null;
 }
 
 /** Normalize a school name for "same school only" comparisons. */
