@@ -46,7 +46,7 @@ beforeEach(() => {
 
 describe('AmProfilePage subjects modes', () => {
   it('diagnostic profile shows read-only topic chips, a Retake link, and saves without subject arrays', async () => {
-    // 'Loops' and 4+ entries would fail amValidateSubjects; diagnostic mode must skip it.
+    // Diagnostic topic names ('Loops') and 4+ entries are shown as-is.
     renderPage({
       ...base,
       subjects_source: 'diagnostic',
@@ -76,22 +76,27 @@ describe('AmProfilePage subjects modes', () => {
     expect(screen.getByText(/All topics are Developing/)).toBeInTheDocument();
   });
 
-  it('onboarding profile keeps the editable pickers and sends the subject arrays', async () => {
+  it('onboarding profile shows read-only topics, a Take diagnostic link, and saves without subject arrays', async () => {
     renderPage({ ...base, subjects_source: 'onboarding', weak_subjects: ['Math'], strong_subjects: ['English'] });
 
     expect(screen.queryByText(/Retake diagnostic/)).not.toBeInTheDocument();
-    // Text lookups keep this fast; role+name queries over every picker are slow in jsdom.
-    expect(screen.getAllByText('Math')[0].closest('[role="checkbox"]')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('Take diagnostic').closest('a')).toHaveAttribute('href', '/diagnostic');
+    // No subject pickers for anyone.
+    expect([...document.querySelectorAll('[role="checkbox"]')].some((el) => /Math/.test(el.textContent))).toBe(false);
+    expect(within(screen.getByRole('list', { name: 'I want help with' })).getByText('Math')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Save changes').closest('button'));
 
-    expect(amMock.update).toHaveBeenCalledWith({
-      name: 'Ada Lovelace',
-      school: 'Analytical College',
-      languages: ['English'],
-      weak_subjects: ['Math'],
-      strong_subjects: ['English'],
-      avatar_url: null,
-    });
+    expect(amMock.update).toHaveBeenCalledTimes(1);
+    const payload = amMock.update.mock.calls[0][0];
+    expect(payload).toEqual({ name: 'Ada Lovelace', school: 'Analytical College', languages: ['English'], avatar_url: null });
   }, 15000);
+
+  it('new onboarding profile with empty arrays shows empty states and Take diagnostic', () => {
+    renderPage({ ...base, subjects_source: 'onboarding', weak_subjects: [], strong_subjects: [] });
+    expect(screen.getByText('No weak topics right now.')).toBeInTheDocument();
+    expect(screen.getByText('No proficient topics yet.')).toBeInTheDocument();
+    expect(screen.getByText('Take diagnostic')).toBeInTheDocument();
+    expect(screen.queryByText(/All topics are Developing/)).not.toBeInTheDocument();
+  });
 });

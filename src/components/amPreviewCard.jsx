@@ -24,7 +24,7 @@ function AmCopyRow({ item, tone }) {
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/6">
         <AmSubjectIcon subject={item.subject} className="size-5" />
       </span>
-      <span className="text-sm text-slate-200">
+      <span className="min-w-0 text-sm break-words text-slate-200">
         {before}
         <strong className={tone}>{item.subject}</strong>
         {after}
@@ -55,30 +55,30 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 30, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-      className="glass-strong relative overflow-hidden rounded-[2rem] p-5 shadow-glow sm:p-7"
+      className="@container glass-strong relative scroll-mb-32 overflow-hidden rounded-[2rem] p-4 shadow-glow sm:p-7 md:scroll-mb-8"
       aria-labelledby="am-preview-title"
       aria-describedby="am-preview-headline"
     >
       <div className="absolute -top-20 -right-20 size-56 rounded-full bg-brand-violet/30 blur-3xl" aria-hidden />
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
+      <div className="relative flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
             <Sparkles className="size-3.5" aria-hidden /> {mode === 'peers' ? 'Study group found' : 'Match found'}
           </p>
-          <h2 id="am-preview-title" className="mt-3 text-2xl font-bold text-white sm:text-3xl">
+          <h2 id="am-preview-title" className="mt-3 text-xl font-bold break-words text-white sm:text-3xl">
             {mode === 'peers' ? 'You + ' + others.length + ' study peers' : 'Meet ' + (others[0]?.profile?.name ?? 'your buddy')}
           </h2>
-          <p id="am-preview-headline" className="mt-1 text-slate-300">{copy.headline}</p>
+          <p id="am-preview-headline" className="mt-1 text-sm text-slate-300 sm:text-base">{copy.headline}</p>
         </div>
-        <AmCountdownRing secondsLeft={secondsLeft} total={total} />
+        <AmCountdownRing secondsLeft={secondsLeft} total={total} className="size-12 sm:size-16" />
       </div>
 
-      <ul className={'relative mt-6 grid gap-3 ' + (others.length > 1 ? 'sm:grid-cols-2' : '')}>
+      <ul className={'relative mt-5 grid gap-3 sm:mt-6 ' + (others.length > 1 ? '@lg:grid-cols-2' : '')}>
         {others.map((m) => {
           const p = m.profile ?? {};
           return (
-            <li key={m.user_id} className="flex items-center gap-4 rounded-3xl bg-white/[0.04] p-4 ring-1 ring-white/10">
-              <span className="relative">
+            <li key={m.user_id} className="flex min-w-0 items-center gap-3 rounded-3xl bg-white/[0.04] p-3 ring-1 ring-white/10 sm:gap-4 sm:p-4">
+              <span className="relative shrink-0">
                 <AmAvatar name={p.name} src={p.avatar_url} size="lg" ring />
                 {m.accepted ? (
                   <span className="absolute -right-1 -bottom-1 grid size-6 place-items-center rounded-full bg-emerald-400 text-ink-950 ring-2 ring-ink-900" title="Accepted">
@@ -89,14 +89,14 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-lg font-semibold text-white">{p.name}</p>
+                  <p className="max-w-full min-w-0 truncate text-base font-semibold text-white sm:text-lg">{p.name}</p>
                   <AmRatingBadge avg={p.rating_avg} count={p.rating_count} />
                 </div>
-                <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-slate-400">
-                  <GraduationCap className="size-4 shrink-0" aria-hidden /> {p.school}
+                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-slate-400">
+                  <GraduationCap className="size-4 shrink-0" aria-hidden /> <span className="min-w-0 truncate">{p.school}</span>
                 </p>
                 <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-                  <Globe className="size-3.5 text-slate-400" aria-hidden />
+                  <Globe className="size-3.5 shrink-0 text-slate-400" aria-hidden />
                   <span className="am-sr-only">Languages:</span>
                   {(p.languages ?? []).map((l) => (
                     <span key={l} className={'rounded-full px-2 py-0.5 ' + (myLangs.has(l.toLowerCase()) ? 'bg-brand-cyan/15 text-cyan-200 ring-1 ring-brand-cyan/40' : 'bg-white/6 text-slate-300')}>
@@ -111,7 +111,7 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
         })}
       </ul>
 
-      <div className="relative mt-5 grid gap-4 md:grid-cols-2">
+      <div className="relative mt-5 grid gap-4 @xl:grid-cols-2">
         <div>
           <p className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-emerald-300 uppercase">
             <Handshake className="size-4" aria-hidden /> You are the tutor for
@@ -148,9 +148,9 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
             {waitingOn.length ? 'You are in! Waiting for ' + waitingOn.join(', ') + '…' : 'Everyone accepted. Joining…'}
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <AmButton variant="secondary" size="lg" icon={SkipForward} onClick={onNext} disabled={busy}>Next</AmButton>
-            <AmButton variant="success" size="lg" icon={Check} onClick={onAccept} loading={busy} data-autofocus>Accept</AmButton>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AmButton variant="secondary" size="lg" icon={SkipForward} onClick={onNext} disabled={busy} className="w-full scroll-mb-32 md:scroll-mb-8">Next</AmButton>
+            <AmButton variant="success" size="lg" icon={Check} onClick={onAccept} loading={busy} data-autofocus className="w-full scroll-mb-32 md:scroll-mb-8">Accept</AmButton>
           </div>
         )}
       </div>

@@ -29,30 +29,7 @@ export const AM_LANGUAGES = [
   'German',
 ];
 
-export const AM_MIN_PICKS = 1;
-export const AM_MAX_PICKS = 3;
-
-/** Returns an error message or null. */
-export function amValidateSubjects(weak = [], strong = []) {
-  const allowed = new Set(AM_SUBJECTS);
-  if (!Array.isArray(weak) || !Array.isArray(strong)) return 'Pick your subjects.';
-  if ([...weak, ...strong].some((s) => !allowed.has(s))) return 'Unknown subject selected.';
-  if (new Set(weak).size !== weak.length || new Set(strong).size !== strong.length) return 'Each subject can only be picked once.';
-  if (weak.length < AM_MIN_PICKS) return 'Pick at least 1 subject you want help with.';
-  if (strong.length < AM_MIN_PICKS) return 'Pick at least 1 subject you can help with.';
-  if (weak.length > AM_MAX_PICKS || strong.length > AM_MAX_PICKS) return `Pick up to ${AM_MAX_PICKS} subjects in each list.`;
-  if (weak.some((s) => strong.includes(s))) return "A subject can't be in both lists.";
-  return null;
-}
-
-/** Toggle a subject in one list while keeping the other list consistent. */
-export function amToggleSubject(list, other, subject) {
-  if (list.includes(subject)) return { list: list.filter((s) => s !== subject), other };
-  if (list.length >= AM_MAX_PICKS) return { list, other, error: `You can pick up to ${AM_MAX_PICKS}.` };
-  return { list: [...list, subject], other: other.filter((s) => s !== subject) };
-}
-
-/** Step 1 of onboarding: name, languages, school. Returns { field: message } (empty = valid). */
+/** Onboarding: name, languages, school. Returns { field: message } (empty = valid). */
 export function amValidateBasics({ name = '', languages = [], school = '' } = {}) {
   const errors = {};
   const trimmed = name.trim();
@@ -86,11 +63,10 @@ export function amIsProfileComplete(profile) {
     languages: profile.languages ?? [],
     school: profile.school ?? '',
   });
-  // Diagnostic-derived arrays skip the onboarding vocabulary/count rules; onboarding path is unchanged (Req 5.9).
-  const subjectsError =
-    profile.subjects_source === 'diagnostic'
-      ? amValidateDiagnosticSubjects(profile.weak_subjects, profile.strong_subjects)
-      : amValidateSubjects(profile.weak_subjects, profile.strong_subjects);
+  // Subjects are optional for every source: they come only from the diagnostic (Mastery_Bridge).
+  // Empty arrays are fine; malformed ones (non-strings, duplicates, overlap) still fail.
+  // Legacy onboarding picks (AM_SUBJECTS, 1–3 each, disjoint) pass this check too.
+  const subjectsError = amValidateDiagnosticSubjects(profile.weak_subjects, profile.strong_subjects);
   return Object.keys(basics).length === 0 && subjectsError === null;
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Handshake, Lightbulb, LogOut, RotateCcw, Save, Star, Target, Video } from 'lucide-react';
-import { amValidateBasics, amValidateSubjects } from '../../shared/amSubjects.js';
+import { amValidateBasics } from '../../shared/amSubjects.js';
 import { useAmAuth } from '../lib/amAuth.jsx';
 import { amSupabase, amFriendlyError } from '../lib/amSupabase.js';
 import { AmButton } from '../components/amButton.jsx';
@@ -9,7 +9,7 @@ import { AmCard, AmCardTitle } from '../components/amCard.jsx';
 import { AmRatingBadge } from '../components/amStars.jsx';
 import { AmSubjectChip } from '../components/amSubjectChip.jsx';
 import { amToast } from '../components/amToast.jsx';
-import { AmAvatarPicker, AmBasicsFields, AmSubjectsFields, amUploadAvatar } from '../components/amProfileFields.jsx';
+import { AmAvatarPicker, AmBasicsFields, amUploadAvatar } from '../components/amProfileFields.jsx';
 
 /** Read-only list of diagnostic-derived topic names (Req 5.6, 5.8). */
 function AmTopicChipList({ id, title, icon: Icon, topics, empty }) {
@@ -37,17 +37,18 @@ function AmTopicChipList({ id, title, icon: Icon, topics, empty }) {
   );
 }
 
-/** Diagnostic-sourced subjects: shown read-only, changed only by retaking the diagnostic. */
-function AmDiagnosticSubjects({ weak, strong }) {
+/** Strong/weak topics are read-only for everyone; only the diagnostic (Mastery_Bridge) changes them. */
+function AmSkillTopics({ weak, strong, diagnostic }) {
   return (
     <div>
       <AmCardTitle
         icon={Compass}
         title="Your SkillGPS topics"
-        subtitle="Set from your diagnostic results."
+        subtitle={diagnostic ? 'Set from your diagnostic results.' : 'Take the diagnostic to set your strong and weak topics.'}
         action={
           <Link to="/diagnostic" className="inline-flex items-center gap-1.5 text-sm text-slate-300 hover:text-white">
-            <RotateCcw className="size-3.5" aria-hidden /> Retake diagnostic
+            {diagnostic ? <RotateCcw className="size-3.5" aria-hidden /> : <Compass className="size-3.5" aria-hidden />}
+            {diagnostic ? 'Retake diagnostic' : 'Take diagnostic'}
           </Link>
         }
       />
@@ -55,7 +56,7 @@ function AmDiagnosticSubjects({ weak, strong }) {
         <AmTopicChipList id="am-diag-weak-title" title="I want help with" icon={Lightbulb} topics={weak} empty="No weak topics right now." />
         <AmTopicChipList id="am-diag-strong-title" title="I can help with" icon={Handshake} topics={strong} empty="No proficient topics yet." />
       </div>
-      {!weak.length && !strong.length ? (
+      {diagnostic && !weak.length && !strong.length ? (
         <p className="mt-4 text-sm text-slate-400">
           All topics are Developing, so matching needs at least one strong or weak topic. Retake to update.
         </p>
@@ -68,16 +69,12 @@ export default function AmProfilePage() {
   const { profile, user, refreshProfile, signOut } = useAmAuth();
   const diagnostic = profile.subjects_source === 'diagnostic';
   const [basics, setBasics] = useState({ name: profile.name, school: profile.school, languages: profile.languages });
-  const [subjects, setSubjects] = useState({ weak: profile.weak_subjects, strong: profile.strong_subjects });
   const [avatarFile, setAvatarFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
 
   async function save() {
     const e = amValidateBasics(basics);
-    // Diagnostic-derived topic names are not AM_SUBJECTS picks, so they skip the onboarding rules.
-    const s = diagnostic ? null : amValidateSubjects(subjects.weak, subjects.strong);
-    if (s) e.subjects = s;
     setErrors(e);
     if (Object.keys(e).length) {
       amToast.error('Please fix the highlighted fields.');
@@ -87,13 +84,8 @@ export default function AmProfilePage() {
     try {
       let avatar_url = profile.avatar_url;
       if (avatarFile) avatar_url = await amUploadAvatar(user.id, avatarFile);
-      const payload = { name: basics.name.trim(), school: basics.school.trim(), languages: basics.languages };
-      // Only the Mastery_Bridge writes diagnostic-sourced arrays.
-      if (!diagnostic) {
-        payload.weak_subjects = subjects.weak;
-        payload.strong_subjects = subjects.strong;
-      }
-      payload.avatar_url = avatar_url;
+      // Never send weak/strong_subjects: only the Mastery_Bridge writes them.
+      const payload = { name: basics.name.trim(), school: basics.school.trim(), languages: basics.languages, avatar_url };
       const { error } = await amSupabase.from('profiles').update(payload).eq('id', user.id);
       if (error) throw error;
       await refreshProfile();
@@ -135,11 +127,7 @@ export default function AmProfilePage() {
           </div>
         </AmCard>
         <AmCard>
-          {diagnostic ? (
-            <AmDiagnosticSubjects weak={profile.weak_subjects ?? []} strong={profile.strong_subjects ?? []} />
-          ) : (
-            <AmSubjectsFields weak={subjects.weak} strong={subjects.strong} onChange={setSubjects} error={errors.subjects} />
-          )}
+          <AmSkillTopics weak={profile.weak_subjects ?? []} strong={profile.strong_subjects ?? []} diagnostic={diagnostic} />
         </AmCard>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           <AmButton variant="ghost" icon={LogOut} onClick={signOut}>
