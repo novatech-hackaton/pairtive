@@ -6,7 +6,7 @@ import { useAmAuth } from '../lib/amAuth.jsx';
 import { amSupabase } from '../lib/amSupabase.js';
 import { amPeekLocalStream, amStopLocalStream } from '../lib/amMedia.js';
 import { useAmQueue } from '../lib/amQueue.js';
-import { useAmNow } from '../lib/amHooks.js';
+import { useAmLatest, useAmNow } from '../lib/amHooks.js';
 import { AmButton } from '../components/amButton.jsx';
 import { AmCard } from '../components/amCard.jsx';
 import { AmCameraPreview } from '../components/amCameraPreview.jsx';
@@ -37,13 +37,16 @@ export default function AmMatchPage() {
   const searchStart = useRef(Date.now());
   const now = useAmNow(1000);
 
+  // Latest phase for the unmount cleanup (a plain closure would only see the first render's 'idle').
+  const phaseRef = useAmLatest(q.phase);
   useEffect(() => {
     return () => {
+      // Heading into the session: keep the camera stream, and let the session page's am_mark_joined clear the queue row.
+      if (phaseRef.current === 'starting') return;
       amSupabase.rpc('am_leave_queue');
-      if (q.phase !== 'starting') amStopLocalStream();
+      amStopLocalStream();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [phaseRef]);
 
   useEffect(() => {
     if (q.phase === 'starting' && q.sessionId) {
