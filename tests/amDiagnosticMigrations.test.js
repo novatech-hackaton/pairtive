@@ -395,8 +395,28 @@ describe('profiles subject constraints', () => {
         `update public.profiles set strong_subjects = array['English','Science','Filipino','History'] where id = auth.uid()`,
       ),
     ).rejects.toThrow(/am_profiles_subjects_check/);
+  });
+
+  it('accepts an onboarded profile with empty subject arrays (subjects come only from the diagnostic)', async () => {
+    const res = await db.query(
+      `insert into auth.users (email, raw_user_meta_data) values ('fay@example.com', '{"full_name":"fay"}') returning id`,
+    );
+    const fay = res.rows[0].id;
+    await asUser(
+      fay,
+      `update public.profiles set name = 'Fay', school = 'UP Diliman', languages = array['English'], onboarded = true
+         where id = auth.uid()`,
+    );
+    const p = await db.query(`select weak_subjects, strong_subjects, onboarded, subjects_source from public.profiles where id = $1`, [fay]);
+    expect(p.rows[0]).toEqual({ weak_subjects: [], strong_subjects: [], onboarded: true, subjects_source: 'onboarding' });
+  });
+
+  it('still requires the basics when onboarded', async () => {
     await expect(
-      asUser(ids.eve, `update public.profiles set weak_subjects = '{}' where id = auth.uid()`),
+      asUser(ids.eve, `update public.profiles set school = ' ' where id = auth.uid()`),
+    ).rejects.toThrow(/am_profiles_onboarded_check/);
+    await expect(
+      asUser(ids.eve, `update public.profiles set languages = '{}' where id = auth.uid()`),
     ).rejects.toThrow(/am_profiles_onboarded_check/);
   });
 });

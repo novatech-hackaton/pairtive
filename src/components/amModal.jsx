@@ -9,6 +9,10 @@ const AM_FOCUSABLE =
 /** Focus trap + Escape + focus restore for dialogs. */
 export function useAmDialog(open, onClose, { dismissible = true } = {}) {
   const ref = useRef(null);
+  // Keep the latest onClose without re-running the focus effect: callers often
+  // pass inline handlers, and re-running would steal focus from inputs on every render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!open) return undefined;
     const previous = document.activeElement;
@@ -20,7 +24,7 @@ export function useAmDialog(open, onClose, { dismissible = true } = {}) {
     function onKey(e) {
       if (e.key === 'Escape' && dismissible) {
         e.stopPropagation();
-        onClose?.();
+        onCloseRef.current?.();
       }
       if (e.key === 'Tab' && node) {
         const items = [...node.querySelectorAll(AM_FOCUSABLE)].filter((el) => el.offsetParent !== null || el === document.activeElement);
@@ -45,7 +49,7 @@ export function useAmDialog(open, onClose, { dismissible = true } = {}) {
       document.removeEventListener('keydown', onKey, true);
       previous?.focus?.();
     };
-  }, [open, onClose, dismissible]);
+  }, [open, dismissible]);
   return ref;
 }
 

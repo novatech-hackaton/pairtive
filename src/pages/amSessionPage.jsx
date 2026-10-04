@@ -235,7 +235,7 @@ export default function AmSessionPage() {
     );
   }
 
-  const chatPanel = <AmChatPanel messages={chat.messages} loading={chat.loading} members={members} selfId={user.id} onSend={chat.send} />;
+  const chatPanel = <AmChatPanel messages={chat.messages} loading={chat.loading} members={members} selfId={user.id} onSend={chat.send} ready={chat.ready} />;
   const notesPanel = (
     <AmNotesPanel value={notes} editorCount={call.participants.length} onChange={(v) => { setNotes(v); notesSyncRef.current?.setFromInput(v); }} />
   );

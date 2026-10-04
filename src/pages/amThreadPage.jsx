@@ -79,7 +79,7 @@ export default function AmThreadPage() {
       </header>
 
       <div className="glass min-h-0 flex-1 overflow-hidden rounded-3xl">
-        <AmChatPanel messages={chat.messages} loading={chat.loading} members={members} selfId={user.id} onSend={chat.send} />
+        <AmChatPanel messages={chat.messages} loading={chat.loading} members={members} selfId={user.id} onSend={chat.send} ready={chat.ready} />
       </div>
 
       <AmModal open={showNotes} onClose={() => setShowNotes(false)} title="Session notes" size="lg" icon={NotebookPen}>

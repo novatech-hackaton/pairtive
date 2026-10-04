@@ -33,10 +33,12 @@ function AmAttachment({ msg }) {
   );
 }
 
-export function AmChatPanel({ messages, loading, members, selfId, onSend }) {
+export function AmChatPanel({ messages, loading, members, selfId, onSend, ready = true }) {
   const [text, setText] = useState('');
   const [file, setFile] = useState(null);
   const [sending, setSending] = useState(false);
+  // Sync guard: Enter + click in the same tick can't double-send.
+  const sendingRef = useRef(false);
   const endRef = useRef(null);
   const fileRef = useRef(null);
   const nameById = Object.fromEntries((members ?? []).map((m) => [m.id, m]));
@@ -47,7 +49,8 @@ export function AmChatPanel({ messages, loading, members, selfId, onSend }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!text.trim() && !file) return;
+    if (!ready || sendingRef.current || (!text.trim() && !file)) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       await onSend({ body: text, file });
@@ -56,9 +59,11 @@ export function AmChatPanel({ messages, loading, members, selfId, onSend }) {
     } catch (err) {
       amToast.error(err.message);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
+  const canSend = ready && !sending && (!!text.trim() || !!file);
 
   return (
     <div className="flex h-full flex-col">
@@ -114,15 +119,16 @@ export function AmChatPanel({ messages, loading, members, selfId, onSend }) {
             e.target.value = '';
           }}
         />
-        <AmIconButton icon={Paperclip} label="Attach image or file" tone="ghost" size="sm" onClick={() => fileRef.current?.click()} />
+        <AmIconButton icon={Paperclip} label="Attach image or file" tone="ghost" size="sm" disabled={!ready} onClick={() => fileRef.current?.click()} />
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Message"
+          placeholder={ready ? 'Message' : 'Connecting chat…'}
           aria-label="Message"
-          className="h-11 flex-1 rounded-full bg-white/[0.06] px-4 text-sm text-white ring-1 ring-white/10 focus:ring-2 focus:ring-brand-violet focus:outline-none"
+          disabled={!ready}
+          className="h-11 min-w-0 flex-1 rounded-full bg-white/[0.06] px-4 text-sm text-white ring-1 ring-white/10 focus:ring-2 focus:ring-brand-violet focus:outline-none disabled:opacity-60"
         />
-        <AmIconButton icon={Send} label="Send message" tone="brand" size="md" type="submit" onClick={submit} />
+        <AmIconButton icon={Send} label="Send message" tone="brand" size="md" type="submit" disabled={!canSend} />
       </form>
     </div>
   );

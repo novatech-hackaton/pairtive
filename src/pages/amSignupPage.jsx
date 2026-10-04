@@ -61,7 +61,7 @@ export default function AmSignupPage() {
 
   return (
     <AmAuthShell>
-      <AmStepper steps={['Account', 'About you', 'Subjects']} current={0} />
+      <AmStepper steps={['Account', 'About you']} current={0} />
       <h1 className="mt-6 text-3xl font-bold text-white">Create your account</h1>
       <p className="mt-2 text-slate-400">It takes about a minute. Then we&apos;ll find your first match.</p>
 

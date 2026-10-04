@@ -4,15 +4,24 @@ import { amValidateAttachment, amSafeFileName } from '../../shared/amAttachments
 import { useAmPostgresChanges } from './amRealtime.js';
 
 /**
- * Chat for a conversation. The thread is created lazily on first send:
- * pass memberIds when there is no conversationId yet.
+ * Chat for a conversation. Pass conversationId for an existing thread, or
+ * memberIds (the other participants) to resolve the thread eagerly so incoming
+ * messages show up before this user sends anything. If eager resolution fails,
+ * the thread is created lazily on first send instead.
  */
 export function useAmChat({ conversationId: initialId, memberIds, sessionId }) {
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(!!initialId);
+  const [error, setError] = useState(null);
   const idRef = useRef(conversationId);
   idRef.current = conversationId;
+  // memberIds is a fresh array every render; key effects on a stable string.
+  const memberKey = [...(memberIds ?? [])].sort().join(',');
+  const memberIdsRef = useRef(memberIds);
+  memberIdsRef.current = memberIds;
+  // Shared in-flight RPC so the eager resolve and a send never double-call it.
+  const pendingRef = useRef(null);
 
   const load = useCallback(async (id) => {
     if (!id) return;
@@ -34,6 +43,45 @@ export function useAmChat({ conversationId: initialId, memberIds, sessionId }) {
     }
   }, [initialId, load]);
 
+  const resolveConversation = useCallback((key, ids) => {
+    if (pendingRef.current?.key === key) return pendingRef.current.promise;
+    const promise = Promise.resolve()
+      .then(() => amSupabase.rpc('am_get_or_create_conversation', { p_member_ids: ids }))
+      .then(
+        ({ data, error: err }) => (err || !data ? { error: err?.message ?? 'Could not open this chat.' } : { data }),
+        (err) => ({ error: err?.message ?? 'Could not open this chat.' }),
+      );
+    pendingRef.current = { key, promise };
+    promise.then((res) => {
+      // Allow a retry (lazy, on send) after a failure.
+      if (res.error && pendingRef.current?.promise === promise) pendingRef.current = null;
+    });
+    return promise;
+  }, []);
+
+  // Eagerly resolve the thread when only memberIds are known (video sessions).
+  useEffect(() => {
+    if (initialId || !memberKey || idRef.current) return undefined;
+    let active = true;
+    setLoading(true);
+    resolveConversation(memberKey, memberIdsRef.current).then((res) => {
+      if (!active) return;
+      if (res.error) {
+        setError(res.error);
+        setLoading(false);
+        return;
+      }
+      setError(null);
+      if (idRef.current) return;
+      idRef.current = res.data;
+      setConversationId(res.data);
+      load(res.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [initialId, memberKey, load, resolveConversation]);
+
   useAmPostgresChanges(
     'chat',
     [{ event: 'INSERT', table: 'messages', filter: conversationId ? 'conversation_id=eq.' + conversationId : undefined }],
@@ -48,13 +96,17 @@ export function useAmChat({ conversationId: initialId, memberIds, sessionId }) {
 
   const ensureConversation = useCallback(async () => {
     if (idRef.current) return idRef.current;
-    const { data, error } = await amSupabase.rpc('am_get_or_create_conversation', { p_member_ids: memberIds });
-    if (error) throw new Error(error.message);
-    setConversationId(data);
-    idRef.current = data;
-    load(data);
-    return data;
-  }, [memberIds, load]);
+    const ids = memberIdsRef.current ?? [];
+    if (!ids.length) throw new Error('Chat is still connecting. Try again in a moment.');
+    const res = await resolveConversation([...ids].sort().join(','), ids);
+    if (res.error) throw new Error(res.error);
+    setError(null);
+    if (idRef.current) return idRef.current;
+    setConversationId(res.data);
+    idRef.current = res.data;
+    load(res.data);
+    return res.data;
+  }, [resolveConversation, load]);
 
   const uploadAttachment = useCallback(async (convId, file) => {
     const path = convId + '/' + Date.now() + '-' + amSafeFileName(file.name);
@@ -89,7 +141,10 @@ export function useAmChat({ conversationId: initialId, memberIds, sessionId }) {
     [ensureConversation, uploadAttachment, sessionId],
   );
 
-  return { conversationId, messages, loading, send };
+  // Sending needs either a thread or someone to start one with.
+  const ready = !!conversationId || memberKey.length > 0;
+
+  return { conversationId, messages, loading, error, ready, send };
 }
 
 export function amAttachmentUrl(path) {

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowRight, Handshake, Lightbulb, MessageCircle, Pencil, RotateCcw, Sparkles, Star, Target, Users, Video } from 'lucide-react';
+import { ArrowRight, Compass, Handshake, Lightbulb, MessageCircle, RotateCcw, Sparkles, Star, Target, Users, Video } from 'lucide-react';
 import { useAmAuth } from '../lib/amAuth.jsx';
 import { amFirstName } from '../lib/amFormat.js';
 import { AmButton } from '../components/amButton.jsx';
@@ -33,6 +33,9 @@ function amGreeting() {
 export default function AmHomePage() {
   const { profile, user } = useAmAuth();
   const navigate = useNavigate();
+  const diagnostic = profile.subjects_source === 'diagnostic';
+  const strong = profile.strong_subjects ?? [];
+  const weak = profile.weak_subjects ?? [];
 
   return (
     <div>
@@ -73,9 +76,11 @@ export default function AmHomePage() {
                 <Handshake className="size-4 text-emerald-300" aria-hidden /> You can help with
               </p>
               <div className="flex flex-wrap gap-2">
-                {profile.strong_subjects.map((s) => (
-                  <AmSubjectChip key={s} subject={s} />
-                ))}
+                {strong.length ? (
+                  strong.map((s) => <AmSubjectChip key={s} subject={s} />)
+                ) : (
+                  <p className="text-sm text-slate-400">{diagnostic ? 'No proficient topics yet.' : 'Take the diagnostic to find out.'}</p>
+                )}
               </div>
             </div>
             <div className="glass rounded-3xl p-5">
@@ -83,20 +88,17 @@ export default function AmHomePage() {
                 <Lightbulb className="size-4 text-amber-300" aria-hidden /> You want help with
               </p>
               <div className="flex flex-wrap gap-2">
-                {profile.weak_subjects.map((s) => (
-                  <AmSubjectChip key={s} subject={s} />
-                ))}
+                {weak.length ? (
+                  weak.map((s) => <AmSubjectChip key={s} subject={s} />)
+                ) : (
+                  <p className="text-sm text-slate-400">{diagnostic ? 'No weak topics right now.' : 'Take the diagnostic to find out.'}</p>
+                )}
               </div>
             </div>
-            {profile.subjects_source === 'diagnostic' ? (
-              <Link to="/diagnostic" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
-                <RotateCcw className="size-3.5" aria-hidden /> Retake diagnostic
-              </Link>
-            ) : (
-              <Link to="/profile" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
-                <Pencil className="size-3.5" aria-hidden /> Edit subjects
-              </Link>
-            )}
+            <Link to="/diagnostic" className="inline-flex items-center gap-1.5 self-end text-sm text-slate-400 hover:text-white">
+              {diagnostic ? <RotateCcw className="size-3.5" aria-hidden /> : <Compass className="size-3.5" aria-hidden />}
+              {diagnostic ? 'Retake diagnostic' : 'Take diagnostic'}
+            </Link>
           </div>
         </div>
       </motion.section>
