@@ -22,6 +22,8 @@ export function useAmQueue(userId) {
   const [myResponse, setMyResponse] = useState(null);
   const phaseRef = useAmLatest(phase);
   const busyRef = useRef(false);
+  // Set once amStartSession is in flight (from respond or startFromProposal) so it runs only once.
+  const startingRef = useRef(false);
 
   const tick = useCallback(async () => {
     if (busyRef.current || phaseRef.current === 'idle' || phaseRef.current === 'starting') return;
@@ -34,6 +36,13 @@ export function useAmQueue(userId) {
         setProposal(res.proposal);
         setMyResponse(res.proposal.members.find((m) => m.user_id === userId)?.accepted ?? null);
         if (res.proposal.status === 'pending') setPhase('preview');
+      } else if (res.status === 'in_session') {
+        // Everyone accepted (the last accepter's RPC moved all queue rows to in_session).
+        // Surfacing the accepted proposal triggers startFromProposal below. Never drop to idle here.
+        if (res.proposal) {
+          setProposal(res.proposal);
+          setPhase((p) => (p === 'starting' ? p : 'preview'));
+        }
       } else if (res.status === 'waiting') {
         setProposal(null);
         setMyResponse(null);
@@ -68,6 +77,7 @@ export function useAmQueue(userId) {
       setErrorReason(null);
       setProposal(null);
       setMyResponse(null);
+      startingRef.current = false;
       try {
         const { error: err } = await amSupabase.rpc('am_join_queue', { p_mode: mode, p_same_school: sameSchoolOnly });
         if (err) throw err;
@@ -91,6 +101,8 @@ export function useAmQueue(userId) {
         if (err) throw err;
         if (status === 'accepted') {
           setPhase('starting');
+          if (startingRef.current) return;
+          startingRef.current = true;
           const { sessionId: sid } = await amApi('amStartSession', { proposalId: proposal.id });
           setSessionId(sid);
         } else if (status === 'declined' || status === 'expired') {
@@ -109,12 +121,14 @@ export function useAmQueue(userId) {
   );
 
   const startFromProposal = useCallback(async () => {
-    if (!proposal || sessionId) return;
+    if (!proposal || sessionId || startingRef.current) return;
+    startingRef.current = true;
     setPhase('starting');
     try {
       const { sessionId: sid } = await amApi('amStartSession', { proposalId: proposal.id });
       setSessionId(sid);
     } catch (e) {
+      startingRef.current = false;
       setError(e.message);
     }
   }, [proposal, sessionId]);
@@ -128,6 +142,7 @@ export function useAmQueue(userId) {
     setProposal(null);
     setMyResponse(null);
     setErrorReason(null);
+    startingRef.current = false;
     try {
       await amSupabase.rpc('am_leave_queue');
     } catch {
