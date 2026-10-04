@@ -15,6 +15,7 @@ export const AM_MATCH_CONFIG = Object.freeze({
   staleMs: 30_000, // heartbeat older than this = not waiting anymore
   relaxAfterMs: 30_000, // one-way matches allowed after this much waiting
   waitFullMs: 60_000, // wait component reaches 1.0 at this wait time
+  // Decline / timeout cooldown only: accepted sessions never block a rematch (unlimited rematching).
   cooldownMs: 24 * 60 * 60 * 1000,
   cooldownMatches: 5, // ...or until both users had this many other matches
   // Group sizes
@@ -111,8 +112,9 @@ export function amSchoolOk(a, b) {
  * Cooldown index built from recent proposals (= matches).
  * history: [{ id, createdAt, status, mode, members: [{ userId, accepted }] }]
  * - Any proposal that was declined / expired puts every pair involving a non-acceptor in cooldown.
- * - Accepted proposals (real sessions): pair cooldown for Study Buddy matching,
- *   group rule (>= half the new group already shared a session) for Study Peers.
+ * - Accepted proposals (real sessions) never block: people who studied together can be
+ *   matched again right away, in both Study Buddy and Study Peers (unlimited rematching).
+ *   They still count as "other matches" when lifting a decline cooldown.
  * - Cooldown lifts after 24h OR once both users had `cooldownMatches` other matches since.
  */
 export function amCreateCooldownIndex(history = [], cfg = AM_MATCH_CONFIG) {
@@ -131,32 +133,32 @@ export function amCreateCooldownIndex(history = [], cfg = AM_MATCH_CONFIG) {
   const lifted = (ids, t, now) =>
     now - t >= cfg.cooldownMs || ids.every((id) => matchesSince(id, t) >= cfg.cooldownMatches);
 
-  function pairBlockingProposal(p, a, b, mode) {
+  function pairBlockingProposal(p, a, b) {
     const ma = p.members.find((m) => m.userId === a);
     const mb = p.members.find((m) => m.userId === b);
     if (!ma || !mb) return false;
-    if (p.status === 'accepted') return mode === AM_MODES.buddy;
-    if (p.status === 'pending') return false;
+    // Accepted = a real session together: never blocks a rematch.
+    if (p.status === 'accepted' || p.status === 'pending') return false;
     // declined / expired: cooldown when either of the two did not accept
     return ma.accepted !== true || mb.accepted !== true;
   }
 
   return {
     matchesSince,
+    // `mode` is kept for call-site compatibility; the rule is the same for both modes now.
+    // eslint-disable-next-line no-unused-vars
     inPairCooldown(a, b, now, mode = AM_MODES.buddy) {
       for (let i = proposals.length - 1; i >= 0; i--) {
         const p = proposals[i];
         if (now - p.createdAt >= cfg.cooldownMs) break;
-        if (pairBlockingProposal(p, a, b, mode) && !lifted([a, b], p.createdAt, now)) return true;
+        if (pairBlockingProposal(p, a, b) && !lifted([a, b], p.createdAt, now)) return true;
       }
       return false;
     },
+    // Study Peers group rule used to block groups where >= half already shared a session.
+    // Accepted history no longer blocks, so this is always false (kept for callers).
+    // eslint-disable-next-line no-unused-vars
     groupInCooldown(ids, now) {
-      for (const p of proposals) {
-        if (p.status !== 'accepted' || now - p.createdAt >= cfg.cooldownMs) continue;
-        const shared = ids.filter((id) => p.members.some((m) => m.userId === id));
-        if (shared.length >= 2 && shared.length * 2 >= ids.length && !lifted(shared, p.createdAt, now)) return true;
-      }
       return false;
     },
   };
@@ -244,7 +246,7 @@ export function amTeachLearn(member, others) {
   };
 }
 
-const amJoinNames = (names) =>
+export const amJoinNames = (names) =>
   names.length <= 1 ? names[0] ?? '' : `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
 
 /**

@@ -71,14 +71,15 @@ describe('amBuildGroup', () => {
     expect(amBuildGroup(a, [b, c], ctx({ blockSet }))).toBeNull();
   });
 
-  it('respects group cooldown', () => {
+  it('re-forms a group that just studied together (no group cooldown after a session)', () => {
     const a = user('a', ['Math'], ['English'], { joinedAt: NOW - 20_000 });
     const b = user('b', ['English'], ['Science']);
     const c = user('c', ['Science'], ['Math']);
     const cooldowns = amCreateCooldownIndex([
-      { id: 'x', createdAt: NOW - 60_000, status: 'accepted', mode: 'peers', members: [{ userId: 'a', accepted: true }, { userId: 'b', accepted: true }] },
+      { id: 'x', createdAt: NOW - 60_000, status: 'accepted', mode: 'peers', members: [{ userId: 'a', accepted: true }, { userId: 'b', accepted: true }, { userId: 'c', accepted: true }] },
     ]);
-    expect(amBuildGroup(a, [b, c], ctx({ cooldowns }))).toBeNull();
+    const group = amBuildGroup(a, [b, c], ctx({ cooldowns }));
+    expect(group?.map((m) => m.id).sort()).toEqual(['a', 'b', 'c']);
   });
 });
 

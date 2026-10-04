@@ -26,3 +26,29 @@ describe('AmPreviewCard practice block', () => {
     expect(screen.getByText('English', { selector: 'strong' }).parentElement).toHaveTextContent("You'll help Ana with English");
   });
 });
+
+describe('AmPreviewCard match confirmation', () => {
+  const card = (members, myResponse, mode = 'buddy') =>
+    render(<AmPreviewCard me={me} myId="me" members={members} mode={mode} secondsLeft={10} myResponse={myResponse} onAccept={() => {}} onNext={() => {}} />);
+  const m = (id, name, accepted) => ({ user_id: id, accepted, profile: { name } });
+
+  it('after I accept, confirms the match and shows who is still waiting', () => {
+    card([m('me', 'Me', true), m('p1', 'Ana', true), m('p2', 'Ben', null)], true, 'peers');
+    const status = screen.getByText(/You accepted! You're matched with Ana & Ben/).closest('[role="status"]');
+    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).toHaveTextContent('Waiting for Ben to accept…');
+    expect(status).toHaveTextContent(/Ana\s*Accepted ✓/);
+    expect(status).toHaveTextContent(/Ben\s*Waiting…/);
+  });
+
+  it('when everyone accepted, says the buddy pair is matched', () => {
+    card([m('me', 'Me', true), m('p1', 'Ana', true)], true);
+    expect(screen.getByRole('status')).toHaveTextContent('You and Ana are matched! Starting your session…');
+  });
+
+  it('tells me the partner is ready before I accept', () => {
+    card([m('me', 'Me', null), m('p1', 'Ana', true)], null);
+    expect(screen.getByText('Ana accepted — tap Accept to start')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Accept/ })).toBeInTheDocument();
+  });
+});
