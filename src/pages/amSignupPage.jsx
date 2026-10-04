@@ -5,8 +5,7 @@ import { amSupabase, amFriendlyError } from '../lib/amSupabase.js';
 import { AmButton } from '../components/amButton.jsx';
 import { AmField } from '../components/amField.jsx';
 import { AmEmptyState } from '../components/amEmptyState.jsx';
-import { AmAuthShell, AmGoogleIcon } from './amAuthShell.jsx';
-import { amSignInWithGoogle } from './amLoginPage.jsx';
+import { AmAuthShell } from './amAuthShell.jsx';
 import { AmStepper } from './amOnboardingPage.jsx';
 
 export function amValidateSignup({ name, email, password }) {
@@ -65,15 +64,7 @@ export default function AmSignupPage() {
       <h1 className="mt-6 text-3xl font-bold text-white">Create your account</h1>
       <p className="mt-2 text-slate-400">It takes about a minute. Then we&apos;ll find your first match.</p>
 
-      <AmButton variant="secondary" size="lg" className="mt-8 w-full" onClick={amSignInWithGoogle}>
-        <AmGoogleIcon />
-        Sign up with Google
-      </AmButton>
-      <div className="my-6 flex items-center gap-3 text-xs text-slate-500" aria-hidden>
-        <span className="h-px flex-1 bg-white/10" /> or with email <span className="h-px flex-1 bg-white/10" />
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
         <AmField label="Full name" autoComplete="name" icon={UserRound} value={form.name} onChange={set('name')} error={errors.name} maxLength={60} />
         <AmField label="Email" type="email" autoComplete="email" icon={Mail} value={form.email} onChange={set('email')} error={errors.email} />
         <AmField

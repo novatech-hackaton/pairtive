@@ -10,7 +10,7 @@ serverless API functions. Every source file is prefixed with "am".
 
 ## Features
 
-- Email/password and Google sign-in, with a stepper onboarding (name, languages, school, avatar, subjects).
+- Email/password sign-in, with a stepper onboarding (name, languages, school, avatar, subjects).
 - AI matcher: inverse subject matching, Bayesian-smoothed ratings/success, language boost, cooldowns, Study Peers group building. Pure logic in \u0060shared/\u0060, fully unit-tested.
 - Match preview with a 15s Accept/Next countdown, teach/learn copy, and auto-opened camera.
 - Live sessions on Daily: video/mic toggles, screen share (desktop), in-session chat (text/images/files), real-time collaborative notes (Yjs), and consent-based client-side recording saved to the user's device.
@@ -47,7 +47,7 @@ tests/      Migration tests (PGlite), API tests, real-model AI test
 
 1. \u0060npm install\u0060
 2. Create a Supabase project. In the SQL editor, run the files in \u0060supabase/migrations/\u0060 in order.
-3. Enable Google auth (optional) under Authentication -> Providers, and add your site URL to the redirect allow-list.
+3. Under Authentication -> URL Configuration, add your site URL to the redirect allow-list (used by email confirmation and password reset links).
 4. Create a free Daily.co account and copy its API key.
 5. Copy \u0060.env.example\u0060 to \u0060.env\u0060 and fill in the values.
 6. \u0060npm run dev\u0060 (the local server also emulates the \u0060/api\u0060 functions).

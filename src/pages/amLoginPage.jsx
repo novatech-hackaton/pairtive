@@ -5,15 +5,7 @@ import { amSupabase, amFriendlyError } from '../lib/amSupabase.js';
 import { AmButton } from '../components/amButton.jsx';
 import { AmField } from '../components/amField.jsx';
 import { amToast } from '../components/amToast.jsx';
-import { AmAuthShell, AmGoogleIcon } from './amAuthShell.jsx';
-
-export async function amSignInWithGoogle() {
-  const { error } = await amSupabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: `${window.location.origin}/home` },
-  });
-  if (error) amToast.error(amFriendlyError(error));
-}
+import { AmAuthShell } from './amAuthShell.jsx';
 
 export default function AmLoginPage() {
   const [email, setEmail] = useState('');
@@ -45,16 +37,7 @@ export default function AmLoginPage() {
       <h1 className="text-3xl font-bold text-white">Welcome back</h1>
       <p className="mt-2 text-slate-400">Sign in to find your next study match.</p>
 
-      <AmButton variant="secondary" size="lg" className="mt-8 w-full" onClick={amSignInWithGoogle}>
-        <AmGoogleIcon />
-        Continue with Google
-      </AmButton>
-
-      <div className="my-6 flex items-center gap-3 text-xs text-slate-500" aria-hidden>
-        <span className="h-px flex-1 bg-white/10" /> or with email <span className="h-px flex-1 bg-white/10" />
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
         <AmField label="Email" type="email" autoComplete="email" icon={Mail} value={email} onChange={(e) => setEmail(e.target.value)} required />
         <AmField
           label="Password"
