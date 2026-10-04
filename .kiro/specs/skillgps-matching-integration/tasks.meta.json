@@ -1,0 +1,978 @@
+{
+  "pbtResults": {
+    "6.5 Write a property test for the summary in `shared/amMasterySummary.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067372459
+    },
+    "4.6 Write a property test for the classifier in `shared/amMasteryClassifier.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067397923
+    },
+    "6.6 Write a property test for recommendation ordering in `shared/amRecommendations.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067399154
+    },
+    "6.7 Write a property test for bridge derivation in `shared/amMasteryBridge.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067401189
+    },
+    "4.4 Write the BKT parity property test in `shared/amBkt.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067533388
+    },
+    "6.8 Write a property test for bridge idempotence in `shared/amMasteryBridge.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067840031
+    },
+    "8.3 Write a property test for diagnostic profile completeness in `shared/amSubjects.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791067865397
+    },
+    "9.3 Write the legacy-equivalence property test in `shared/amMatchScore.test.js`": {
+      "status": "passed",
+      "lastRunTimestamp": 1791068925861
+    }
+  },
+  "executionHistory": {
+    "1.1 Add fast-check and freeze the pre-change matcher as a test oracle": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077249
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066092639
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066472577
+      }
+    ],
+    "1.2 Extend `server/amServer.js` and add `shared/amIds.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077343
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066093309
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066473269
+      }
+    ],
+    "1.3 Write unit tests for the `amHandler` extensions in `tests/amApi.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077429
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066880417
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067107897
+      }
+    ],
+    "2.1 Create `supabase/migrations/20261003000007_am_diagnostic.sql` (tables and security)": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077507
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066094669
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066474601
+      }
+    ],
+    "2.2 Add the `profiles` changes and the Mastery_Bridge RPC to `20261003000007_am_diagnostic.sql`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077565
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066881770
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067112652
+      }
+    ],
+    "2.3 Create `supabase/migrations/20261003000008_am_diagnostic_seed.sql`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077623
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066096001
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066475991
+      }
+    ],
+    "2.4 Write PGlite migration tests in `tests/amDiagnosticMigrations.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077689
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067450587
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067718859
+      }
+    ],
+    "3. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077763
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068662792
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068990398
+      }
+    ],
+    "4.1 Port the thresholds and classifier": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077891
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066096976
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066477079
+      }
+    ],
+    "4.2 Create `scripts/amBktExtract.py` and generate the parameter and parity files": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077945
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066489251
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066745128
+      }
+    ],
+    "4.3 Implement `shared/amBkt.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066077995
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066883212
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067108981
+      }
+    ],
+    "4.4 Write the BKT parity property test in `shared/amBkt.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078049
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067451866
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067720253
+      }
+    ],
+    "5.1 Create `api/amPredict.js` and register it in `vercel.json`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078101
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067452817
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067721856
+      }
+    ],
+    "5.2 Write API tests for `amPredict` in `tests/amApi.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078176
+      },
+      {
+        "executionId": "21a435a5-fcc9-4a9b-8663-545fd2e98716",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068287517
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068983890
+      }
+    ],
+    "6.1 Port the response sequence builder and scorer": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078258
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066490434
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066740338
+      }
+    ],
+    "6.2 Port the recommendation content and engine": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078333
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066491273
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066741434
+      }
+    ],
+    "6.3 Create `shared/amMasterySummary.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078384
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066493079
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066742427
+      }
+    ],
+    "6.4 Create `shared/amMasteryBridge.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078447
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066493722
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066743753
+      }
+    ],
+    "7. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078508
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068663524
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068991528
+      }
+    ],
+    "8.1 Update `shared/amSubjects.js` and the profile load": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078575
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066884529
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067110249
+      }
+    ],
+    "8.2 Add the diagnostic mode to `src/pages/amProfilePage.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078681
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067734571
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068985183
+      }
+    ],
+    "9.1 Update `shared/amMatchScore.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078752
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066885770
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067111648
+      }
+    ],
+    "9.2 Update `shared/amGroupBuilder.js` for Study_Peers_Mode": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078807
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067454749
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067723771
+      }
+    ],
+    "9.3 Write the legacy-equivalence property test in `shared/amMatchScore.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078880
+      },
+      {
+        "executionId": "21a435a5-fcc9-4a9b-8663-545fd2e98716",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068287750
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068986578
+      }
+    ],
+    "9.9 Show practice topics in `src/components/amPreviewCard.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066078939
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067735288
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068988013
+      }
+    ],
+    "10.1 Update `api/amMatch.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079006
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067455796
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067726091
+      }
+    ],
+    "10.2 Handle `diagnostic-required` on the client": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079059
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068999002
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069400175
+      }
+    ],
+    "10.3 Write API tests for the `amMatch` gate in `tests/amApi.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079110
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069000359
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069402512
+      }
+    ],
+    "11. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079179
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070337619
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070656341
+      }
+    ],
+    "12.1 Create `src/lib/amDiagnostic.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079238
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067736655
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068989253
+      }
+    ],
+    "12.2 Create `src/lib/amMastery.jsx` and mount it in `src/amMain.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079293
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069001476
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069402902
+      }
+    ],
+    "13.1 Create `src/components/amMasteryBadge.jsx` and `src/components/amMasteryBar.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079348
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066756244
+      },
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066875106
+      }
+    ],
+    "13.2 Create `src/pages/amDiagnosticPage.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079402
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069404250
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070648210
+      }
+    ],
+    "13.3 Create `src/pages/amSkillGpsPage.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079497
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069405549
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070649190
+      }
+    ],
+    "13.4 Create `src/components/amSkillSummaryCard.jsx` and render it in `src/pages/amHomePage.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079554
+      },
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069407159
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070650426
+      }
+    ],
+    "14.1 Add `AmDiagnosticGuard` and the new routes": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079616
+      },
+      {
+        "executionId": "d058f6b9-6306-415f-80a8-ad9b08d805eb",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069971491
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070651643
+      }
+    ],
+    "14.2 Write routing tests in `src/amApp.test.jsx`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079683
+      },
+      {
+        "executionId": "d058f6b9-6306-415f-80a8-ad9b08d805eb",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069972275
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070652960
+      }
+    ],
+    "15.1 Update `.env.example` and `README.md`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079757
+      },
+      {
+        "executionId": "d058f6b9-6306-415f-80a8-ad9b08d805eb",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069973593
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070654132
+      }
+    ],
+    "15.2 Write the config smoke test in `tests/amConfig.test.js`": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079827
+      },
+      {
+        "executionId": "d058f6b9-6306-415f-80a8-ad9b08d805eb",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069974740
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070655147
+      }
+    ],
+    "16. Final checkpoint - Ensure all tests pass and the build succeeds": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066079900
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070337280
+      },
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070657298
+      }
+    ],
+    "6. Port the diagnostic and SkillGPS pure logic": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791066743833
+      }
+    ],
+    "1. Set up test tooling, the legacy oracle, and server plumbing": [
+      {
+        "executionId": "6e0a56a8-cd35-445d-845e-75c31037975d",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067108185
+      }
+    ],
+    "4.6 Write a property test for the classifier in `shared/amMasteryClassifier.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067251164
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067300489
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067437293
+      }
+    ],
+    "6.5 Write a property test for the summary in `shared/amMasterySummary.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067253765
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067302040
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067438626
+      }
+    ],
+    "6.6 Write a property test for recommendation ordering in `shared/amRecommendations.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067254032
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067303414
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067440024
+      }
+    ],
+    "6.7 Write a property test for bridge derivation in `shared/amMasteryBridge.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067255953
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067304545
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067441578
+      }
+    ],
+    "4.5 Write a property test for Prediction_Result invariants in `shared/amBkt.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067257306
+      }
+    ],
+    "4.7 Write a property test for request validation in `shared/amBkt.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067258710
+      }
+    ],
+    "6.8 Write a property test for bridge idempotence in `shared/amMasteryBridge.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067260136
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067738520
+      }
+    ],
+    "6.9 Write a property test comparing the SQL bridge with the JS reference in `tests/amDiagnosticMigrations.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067261557
+      }
+    ],
+    "8.3 Write a property test for diagnostic profile completeness in `shared/amSubjects.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067263062
+      },
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067739761
+      }
+    ],
+    "8.4 Write a property test for unchanged onboarding completeness in `shared/amSubjects.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067264535
+      }
+    ],
+    "9.4 Write a property test for immediate shared-strong acceptance in `shared/amMatchScore.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067266302
+      }
+    ],
+    "9.5 Write a property test for the score range in `shared/amGroupBuilder.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067267693
+      }
+    ],
+    "9.6 Write a metamorphic property test for overlap size in `shared/amMatchScore.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067269096
+      }
+    ],
+    "9.7 Write a property test for practice copy in `shared/amMatchScore.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067270501
+      }
+    ],
+    "9.8 Write a property test for Study Peers practice roles in `shared/amGroupBuilder.test.js`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067271964
+      }
+    ],
+    "13.5 Write component tests in `src/pages/amDiagnosticPage.test.jsx`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067272939
+      }
+    ],
+    "13.6 Write component tests in `src/pages/amSkillGpsPage.test.jsx` and `src/components/amSkillSummaryCard.test.jsx`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067274812
+      }
+    ],
+    "14.3 Write provider tests in `src/lib/amMastery.test.jsx`": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067276160
+      }
+    ],
+    "2. Add the diagnostic schema migrations and seed": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067718977
+      }
+    ],
+    "4. Port BKT prediction to Node": [
+      {
+        "executionId": "fd503a2e-0840-4180-a582-36eb01c7ff48",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791067720343
+      }
+    ],
+    "5. Implement the Predict_API": [
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068984070
+      }
+    ],
+    "8. Branch profile completeness on `subjects_source`": [
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068985280
+      }
+    ],
+    "9. Add shared-strong matching to the Matcher": [
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791068988090
+      }
+    ],
+    "10. Gate matching on the diagnostic": [
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069402598
+      }
+    ],
+    "12. Add diagnostic data access and the mastery provider": [
+      {
+        "executionId": "6e0d60ca-dd97-40b9-ac22-2e6a8b76ff6a",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791069403010
+      }
+    ],
+    "13. Build the re-skinned Diagnostic, SkillGPS and Home UI": [
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070650699
+      }
+    ],
+    "14. Wire routes, guard and navigation": [
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070653072
+      }
+    ],
+    "15. Clean up env and config": [
+      {
+        "executionId": "44f9c99b-f276-4f3d-8ac8-f5e73ca5d95c",
+        "chatSessionId": "sess_f3af1668-a50d-43b0-8d9a-40905931d829",
+        "timestamp": 1791070655255
+      }
+    ]
+  }
+}

@@ -9,6 +9,8 @@ import {
   amIsFresh,
   amIsSuspended,
   amOneWayAllowed,
+  amPracticeScore,
+  amSharedStrong,
   amSharesLanguage,
   amSmoothedRating,
   amSmoothedSuccess,
@@ -18,11 +20,15 @@ import {
 
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 
-/** Every member learns something (weak covered). Strict mode also requires every member to teach something. */
+/**
+ * Every member is satisfied by the swap rule (strict: teaches and learns; relaxed: either),
+ * or by practicing a shared strength with someone, which does not depend on `relaxed`.
+ */
 export function amGroupSatisfied(group, relaxed) {
   return group.every((m) => {
     const others = group.filter((o) => o.id !== m.id);
-    const { teach, learn } = amTeachLearn(m, others);
+    const { teach, learn, practice } = amTeachLearn(m, others);
+    if (practice.length > 0) return true;
     return relaxed ? teach.length > 0 || learn.length > 0 : teach.length > 0 && learn.length > 0;
   });
 }
@@ -31,9 +37,21 @@ export function amAllWeakCovered(group) {
   return group.every((m) => amTeachLearn(m, group.filter((o) => o.id !== m.id)).learn.length > 0);
 }
 
+/**
+ * Every member learns something or practices a shared strength.
+ * With no shared strong labels this is exactly amAllWeakCovered.
+ */
+export function amAllMembersEngaged(group) {
+  return group.every((m) => {
+    const { learn, practice } = amTeachLearn(m, group.filter((o) => o.id !== m.id));
+    return learn.length > 0 || practice.length > 0;
+  });
+}
+
 /** Marginal value of adding `cand` to `group`. */
 export function amMarginalScore(group, cand, now, cfg = AM_MATCH_CONFIG) {
   const groupStrong = { strong: [...new Set(group.flatMap((m) => m.strong))] };
+  const sharedWithGroup = amSharedStrong(cand, groupStrong);
   const learnCov = amCoverage(cand, groupStrong);
   const uncovered = new Set(group.flatMap((m) => m.weak).filter((s) => !groupStrong.strong.includes(s)));
   let teachGain;
@@ -43,8 +61,14 @@ export function amMarginalScore(group, cand, now, cfg = AM_MATCH_CONFIG) {
     const allWeak = new Set(group.flatMap((m) => m.weak));
     teachGain = cand.strong.some((s) => allWeak.has(s)) ? 0.5 : 0;
   }
+  // Empty overlap keeps the legacy expression exactly, same branch as amScoreCandidate.
+  const comp = (learnCov + teachGain) / 2;
+  const reciprocity =
+    sharedWithGroup.length === 0
+      ? comp
+      : Math.max(comp, cfg.sharedStrongFactor * amPracticeScore(sharedWithGroup.length, cfg));
   const parts = {
-    reciprocity: (learnCov + teachGain) / 2,
+    reciprocity,
     rating: amSmoothedRating(cand, cfg),
     success: amSmoothedSuccess(cand, cfg),
     wait: clamp01(amWaitMs(cand, now) / cfg.waitFullMs),
@@ -57,12 +81,12 @@ export function amMarginalScore(group, cand, now, cfg = AM_MATCH_CONFIG) {
     w.success * parts.success +
     w.wait * parts.wait +
     w.language * parts.language;
-  return { score, parts, connects: learnCov > 0 || teachGain > 0 };
+  return { score, parts, connects: learnCov > 0 || teachGain > 0 || sharedWithGroup.length > 0 };
 }
 
 /**
  * Greedy: start with the seed (longest waiting), keep adding the best-scoring compatible
- * candidate until every member's weak subject is covered (and size >= 3) or size hits 5.
+ * candidate until every member learns or practices something (and size >= 3) or size hits 5.
  */
 export function amBuildGroup(seed, candidates, ctx, cfg = AM_MATCH_CONFIG) {
   const { now } = ctx;
@@ -73,7 +97,7 @@ export function amBuildGroup(seed, candidates, ctx, cfg = AM_MATCH_CONFIG) {
   );
 
   while (group.length < cfg.peersMax) {
-    const done = group.length >= cfg.peersMin && amAllWeakCovered(group) && amGroupSatisfied(group, relaxed);
+    const done = group.length >= cfg.peersMin && amAllMembersEngaged(group) && amGroupSatisfied(group, relaxed);
     if (done) break;
 
     let best = null;

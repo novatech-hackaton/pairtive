@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { amCreateCooldownIndex, amTeachLearn } from './amMatchScore.js';
-import { amAllWeakCovered, amBuildGroup, amPlanMatches } from './amGroupBuilder.js';
+import {
+  amAllMembersEngaged,
+  amAllWeakCovered,
+  amBuildGroup,
+  amGroupSatisfied,
+  amMarginalScore,
+  amPlanMatches,
+} from './amGroupBuilder.js';
+import * as legacy from '../tests/fixtures/amLegacyMatcher.js';
 
 const NOW = 1_800_000_000_000;
 const user = (id, weak, strong, over = {}) => ({
@@ -104,5 +112,55 @@ describe('amPlanMatches', () => {
     const a = p.members.find((m) => m.userId === 'a');
     expect(a.teach).toEqual(['English']);
     expect(a.learn).toEqual(['Math']);
+  });
+});
+
+describe('Study Peers shared strengths', () => {
+  it('forms a group of 3 who share only strong labels, without waiting to relax', () => {
+    const a = user('a', ['History'], ['Math'], { joinedAt: NOW - 20_000 });
+    const b = user('b', ['Filipino'], ['Math']);
+    const c = user('c', ['Programming'], ['Math']);
+    const group = amBuildGroup(a, [b, c], ctx());
+    expect(group.map((m) => m.id).sort()).toEqual(['a', 'b', 'c']);
+    expect(amAllWeakCovered(group)).toBe(false);
+    expect(amAllMembersEngaged(group)).toBe(true);
+    expect(amGroupSatisfied(group, false)).toBe(true);
+    for (const m of group) {
+      expect(amTeachLearn(m, group.filter((o) => o.id !== m.id)).practice).toEqual(['Math']);
+    }
+  });
+
+  it('a shared strength connects a candidate and lifts reciprocity to the practice score', () => {
+    const a = user('a', ['History'], ['Math', 'Science', 'English']);
+    const b = user('b', ['Filipino'], ['Math', 'Science', 'English']);
+    const r = amMarginalScore([a], b, NOW);
+    expect(r.connects).toBe(true);
+    expect(r.parts.reciprocity).toBeCloseTo(0.75);
+  });
+
+  it('matches the legacy oracle on a queue where no pair shares a strong label', () => {
+    // Every strong label below is held by exactly one user.
+    const users = [
+      user('p1', ['Math', 'Science'], ['English'], { joinedAt: NOW - 40_000 }),
+      user('p2', ['English'], ['Math'], { joinedAt: NOW - 15_000 }),
+      user('p3', ['Math'], ['Science'], { joinedAt: NOW - 12_000 }),
+      user('p4', ['Science'], ['History'], { joinedAt: NOW - 9_000 }),
+      user('p5', ['History'], ['Filipino'], { joinedAt: NOW - 5_000 }),
+      user('b1', ['Calculus'], ['Statistics'], { mode: 'buddy', joinedAt: NOW - 35_000 }),
+      user('b2', ['Statistics'], ['Biology'], { mode: 'buddy', joinedAt: NOW - 8_000 }),
+      user('b3', ['Chemistry'], ['Physics'], { mode: 'buddy', joinedAt: NOW - 7_000 }),
+      user('b4', ['Physics'], ['Chemistry'], { mode: 'buddy', joinedAt: NOW - 6_000 }),
+    ];
+    const live = amPlanMatches(users, ctx());
+    const oracle = legacy.amPlanMatches(users, {
+      now: NOW,
+      blockSet: new Set(),
+      cooldowns: legacy.amCreateCooldownIndex([]),
+    });
+    expect(live.some((p) => p.mode === 'peers')).toBe(true);
+    for (const p of live) for (const m of p.members) expect(m.practice).toEqual([]);
+    const strip = (plan) =>
+      plan.map((p) => ({ ...p, members: p.members.map(({ practice, ...rest }) => rest) }));
+    expect(strip(live)).toEqual(oracle);
   });
 });

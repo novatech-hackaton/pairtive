@@ -11,6 +11,7 @@ import '@fontsource/plus-jakarta-sans/800.css';
 import './amIndex.css';
 import AmApp from './amApp.jsx';
 import { AmAuthProvider } from './lib/amAuth.jsx';
+import { AmMasteryProvider } from './lib/amMastery.jsx';
 import { AmToaster } from './components/amToast.jsx';
 
 createRoot(document.getElementById('root')).render(
@@ -18,8 +19,10 @@ createRoot(document.getElementById('root')).render(
     <MotionConfig reducedMotion="user">
       <BrowserRouter>
         <AmAuthProvider>
-          <AmApp />
-          <AmToaster />
+          <AmMasteryProvider>
+            <AmApp />
+            <AmToaster />
+          </AmMasteryProvider>
         </AmAuthProvider>
       </BrowserRouter>
     </MotionConfig>

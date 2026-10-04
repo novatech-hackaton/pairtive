@@ -1,10 +1,19 @@
 // Shared server helpers for /api functions (Vercel Node runtime). Never imported by the client.
 import { createClient } from '@supabase/supabase-js';
+import { amIsUuid } from '../shared/amIds.js';
 
+export { amIsUuid };
+
+/**
+ * HTTP error with a client-safe message. `extra.reason` (machine-readable code) and
+ * `extra.fields` (per-field validation messages) are passed through to the JSON body.
+ */
 export class AmHttpError extends Error {
-  constructor(status, message) {
+  constructor(status, message, extra = {}) {
     super(message);
     this.status = status;
+    if (extra?.reason !== undefined) this.reason = extra.reason;
+    if (extra?.fields !== undefined) this.fields = extra.fields;
   }
 }
 
@@ -29,24 +38,74 @@ export async function amRequireUser(req, admin = amAdmin()) {
   return data.user;
 }
 
-export const amIsUuid = (v) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+const AM_INVALID_JSON = 'Request body must be valid JSON.';
+const AM_BODY_TOO_LARGE = 'Request body too large.';
 
-/** Wrap a handler: POST only, JSON errors, no stack traces leaked. */
-export function amHandler(fn) {
+/** Read `req.body` once. Vercel's lazy getter throws on malformed JSON, so capture that. */
+function amReadRawBody(req) {
+  try {
+    return { raw: req.body, failed: false };
+  } catch {
+    return { raw: undefined, failed: true };
+  }
+}
+
+function amHeader(req, name) {
+  const headers = req.headers || {};
+  return headers[name] ?? headers[name.toLowerCase()];
+}
+
+/**
+ * Wrap a handler: POST only, optional body size limit, JSON errors, no stack traces leaked.
+ * Status precedence: 405 → 413 → 400 (malformed JSON) → whatever `fn` throws.
+ */
+export function amHandler(fn, { maxBodyBytes } = {}) {
+  const limit = Number.isFinite(maxBodyBytes) && maxBodyBytes >= 0 ? maxBodyBytes : null;
+
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'POST');
       return res.status(405).json({ error: 'Method not allowed' });
     }
+
+    if (limit !== null) {
+      const declared = Number(amHeader(req, 'content-length'));
+      if (Number.isFinite(declared) && declared > limit) {
+        return res.status(413).json({ error: AM_BODY_TOO_LARGE });
+      }
+    }
+
+    const { raw, failed } = amReadRawBody(req);
+    if (limit !== null && typeof raw === 'string' && Buffer.byteLength(raw, 'utf8') > limit) {
+      return res.status(413).json({ error: AM_BODY_TOO_LARGE });
+    }
+    if (failed) return res.status(400).json({ error: AM_INVALID_JSON });
+
+    let body;
+    if (typeof raw === 'string') {
+      try {
+        body = JSON.parse(raw || '{}');
+      } catch {
+        return res.status(400).json({ error: AM_INVALID_JSON });
+      }
+    } else {
+      body = raw || {};
+    }
+
     try {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
       const result = await fn({ req, body });
       return res.status(200).json(result ?? {});
     } catch (err) {
       const status = err instanceof AmHttpError ? err.status : 500;
-      if (status >= 500) console.error('[api]', err);
-      return res.status(status).json({ error: status >= 500 ? 'Something went wrong. Please try again.' : err.message });
+      if (status >= 500) {
+        console.error('[api]', err);
+        return res.status(status).json({ error: 'Something went wrong. Please try again.' });
+      }
+      const payload = { error: err.message };
+      if (err.reason !== undefined) payload.reason = err.reason;
+      if (err.fields !== undefined) payload.fields = err.fields;
+      return res.status(status).json(payload);
     }
   };
 }

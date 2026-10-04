@@ -7,7 +7,8 @@
     "api/amReportVerify.js": { "maxDuration": 60, "memory": 2048 },
     "api/amMatch.js": { "maxDuration": 15 },
     "api/amStartSession.js": { "maxDuration": 15 },
-    "api/amSessionToken.js": { "maxDuration": 10 }
+    "api/amSessionToken.js": { "maxDuration": 10 },
+    "api/amPredict.js": { "maxDuration": 10 }
   },
   "headers": [
     {

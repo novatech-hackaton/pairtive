@@ -17,6 +17,7 @@ export function useAmQueue(userId) {
   const [proposal, setProposal] = useState(null);
   const [waiting, setWaiting] = useState(0);
   const [error, setError] = useState('');
+  const [errorReason, setErrorReason] = useState(null); // e.g. 'diagnostic-required' from amMatch's 403
   const [sessionId, setSessionId] = useState(null);
   const [myResponse, setMyResponse] = useState(null);
   const phaseRef = useAmLatest(phase);
@@ -27,6 +28,7 @@ export function useAmQueue(userId) {
     busyRef.current = true;
     try {
       const res = await amApi('amMatch');
+      setErrorReason(null);
       setWaiting(res.waiting ?? 0);
       if (res.status === 'proposed' && res.proposal) {
         setProposal(res.proposal);
@@ -42,6 +44,7 @@ export function useAmQueue(userId) {
     } catch (e) {
       if (e.status === 403) {
         setError(e.message);
+        setErrorReason(e.reason ?? null);
         setPhase('error');
       }
     } finally {
@@ -62,6 +65,7 @@ export function useAmQueue(userId) {
   const start = useCallback(
     async (mode, sameSchoolOnly) => {
       setError('');
+      setErrorReason(null);
       setProposal(null);
       setMyResponse(null);
       try {
@@ -71,6 +75,7 @@ export function useAmQueue(userId) {
         tick();
       } catch (e) {
         setError(e.message);
+        setErrorReason(e.reason ?? null);
         setPhase('error');
       }
     },
@@ -122,6 +127,7 @@ export function useAmQueue(userId) {
     setPhase('idle');
     setProposal(null);
     setMyResponse(null);
+    setErrorReason(null);
     try {
       await amSupabase.rpc('am_leave_queue');
     } catch {
@@ -137,5 +143,5 @@ export function useAmQueue(userId) {
     return () => window.removeEventListener('pagehide', handler);
   }, [phaseRef]);
 
-  return { phase, proposal, waiting, error, sessionId, myResponse, start, respond, leave };
+  return { phase, proposal, waiting, error, errorReason, sessionId, myResponse, start, respond, leave };
 }

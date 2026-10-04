@@ -1,10 +1,27 @@
 // POST /api/amMatch - heartbeat + run the AI matcher + return the caller's match state.
 import { AM_MATCH_CONFIG, amBuildBlockSet, amCreateCooldownIndex, amNormalizeUser } from '../shared/amMatchScore.js';
 import { amPlanMatches } from '../shared/amGroupBuilder.js';
-import { amAdmin, amDbError, amHandler, amRequireUser } from '../server/amServer.js';
+import { AmHttpError, amAdmin, amDbError, amHandler, amRequireUser } from '../server/amServer.js';
 
 const PROFILE_FIELDS =
-  'id, name, avatar_url, school, languages, weak_subjects, strong_subjects, rating_avg, rating_count, success_count, sessions_count, status, suspended_until';
+  'id, name, avatar_url, school, languages, weak_subjects, strong_subjects, subjects_source, rating_avg, rating_count, success_count, sessions_count, status, suspended_until';
+
+/**
+ * Diagnostic gate (Req 3.3). Joining happens through the `am_join_queue` RPC, so the first
+ * poll is where a user without Mastery_Records is caught: drop their queue row so no other
+ * matcher run can plan them, then tell the client to send them to the diagnostic.
+ */
+async function amRequireDiagnostic(admin, userId) {
+  const { count, error } = await admin
+    .from('student_topic_mastery')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  amDbError(error);
+  if (count) return;
+  const { error: delError } = await admin.from('match_queue').delete().eq('user_id', userId);
+  amDbError(delError);
+  throw new AmHttpError(403, 'Take the diagnostic before matching.', { reason: 'diagnostic-required' });
+}
 
 async function amLoadHistory(admin, userIds, since) {
   const { data, error } = await admin
@@ -45,7 +62,11 @@ async function amRunMatcher(admin, mode) {
   amDbError(blocksRes.error);
 
   const profiles = new Map(profilesRes.data.map((p) => [p.id, p]));
-  const users = queue.filter((q) => profiles.has(q.user_id)).map((q) => amNormalizeUser(q, profiles.get(q.user_id)));
+  // Only diagnostic-sourced profiles are matchable. This also covers gated users who joined
+  // through `am_join_queue` but have not polled yet (so their row was not deleted).
+  const users = queue
+    .filter((q) => profiles.get(q.user_id)?.subjects_source === 'diagnostic')
+    .map((q) => amNormalizeUser(q, profiles.get(q.user_id)));
   const ctx = {
     now: Date.now(),
     blockSet: amBuildBlockSet(blocksRes.data),
@@ -85,9 +106,14 @@ async function amProposalView(admin, proposalId) {
   return { ...proposal, members: members.map((m) => ({ ...m, profile: byId.get(m.user_id) ?? null })) };
 }
 
-export default amHandler(async ({ req }) => {
-  const admin = amAdmin();
+/** Build the handler; `getAdmin` is injectable so tests can pass a fake client. */
+export function amCreateMatchHandler(getAdmin = amAdmin) {
+  return amHandler(async ({ req }) => amMatchPoll(getAdmin(), req));
+}
+
+async function amMatchPoll(admin, req) {
   const user = await amRequireUser(req, admin);
+  await amRequireDiagnostic(admin, user.id);
 
   await admin.rpc('am_expire_proposals');
 
@@ -115,4 +141,6 @@ export default amHandler(async ({ req }) => {
   };
   if (current.proposal_id) result.proposal = await amProposalView(admin, current.proposal_id);
   return result;
-});
+}
+
+export default amCreateMatchHandler();
