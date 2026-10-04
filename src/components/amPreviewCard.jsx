@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { Check, Clock, Globe, GraduationCap, Handshake, Lightbulb, SkipForward, Sparkles, Users } from 'lucide-react';
-import { amTeachLearnCopy } from '../../shared/amMatchScore.js';
+import { Check, Clock, Globe, GraduationCap, Handshake, Lightbulb, PartyPopper, SkipForward, Sparkles, Users } from 'lucide-react';
+import { amJoinNames, amTeachLearnCopy } from '../../shared/amMatchScore.js';
 import { AmAvatar } from './amAvatar.jsx';
 import { AmButton } from './amButton.jsx';
 import { AmCountdownRing } from './amCountdownRing.jsx';
@@ -47,7 +47,11 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
   const copy = amTeachLearnCopy({ weak: me.weak_subjects, strong: me.strong_subjects }, otherProfiles);
   const practice = copy.practice ?? [];
   const myLangs = new Set((me.languages ?? []).map((l) => l.toLowerCase()));
-  const waitingOn = others.filter((m) => m.accepted !== true).map((m) => m.profile?.name ?? 'Student');
+  const nameOf = (m) => m.profile?.name ?? 'Student';
+  const otherNames = others.map(nameOf);
+  const waitingOn = others.filter((m) => m.accepted !== true).map(nameOf);
+  const acceptedOthers = others.filter((m) => m.accepted === true).map(nameOf);
+  const allAccepted = others.length > 0 && waitingOn.length === 0;
 
   return (
     <motion.section
@@ -143,15 +147,77 @@ export function AmPreviewCard({ me, myId, members, mode, secondsLeft, total = 15
 
       <div className="relative mt-6">
         {myResponse === true ? (
-          <p className="flex items-center justify-center gap-2 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-300" role="status">
-            <Clock className="size-4 text-brand-cyan" aria-hidden />
-            {waitingOn.length ? 'You are in! Waiting for ' + waitingOn.join(', ') + '…' : 'Everyone accepted. Joining…'}
-          </p>
+          <div
+            className={
+              'rounded-2xl p-4 ring-1 ' + (allAccepted ? 'bg-emerald-400/10 ring-emerald-400/30' : 'bg-white/[0.04] ring-white/10')
+            }
+            role="status"
+            aria-live="polite"
+          >
+            {allAccepted ? (
+              <p className="flex items-center justify-center gap-2 text-center text-sm font-semibold text-emerald-200 sm:text-base">
+                <PartyPopper className="size-5 shrink-0" aria-hidden />
+                <span className="min-w-0 break-words">
+                  {mode === 'peers'
+                    ? "You're all matched! Starting your session…"
+                    : 'You and ' + (otherNames[0] ?? 'your buddy') + ' are matched! Starting your session…'}
+                </span>
+              </p>
+            ) : (
+              <>
+                <p className="flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
+                  <Check className="size-5 shrink-0 text-emerald-300" strokeWidth={3} aria-hidden />
+                  <span className="min-w-0 break-words">You accepted! You're matched with {amJoinNames(otherNames)}</span>
+                </p>
+                <p className="mt-1 flex items-center gap-2 text-sm text-slate-300">
+                  <span className="relative flex size-2.5 shrink-0" aria-hidden>
+                    <span className="absolute inline-flex size-full rounded-full bg-brand-cyan opacity-60 motion-safe:animate-ping" />
+                    <span className="relative inline-flex size-2.5 rounded-full bg-brand-cyan" />
+                  </span>
+                  <span className="min-w-0 break-words">Waiting for {amJoinNames(waitingOn)} to accept…</span>
+                </p>
+              </>
+            )}
+            <ul className="mt-3 flex flex-wrap gap-2" aria-label="Who has accepted">
+              {others.map((m) => (
+                <li
+                  key={m.user_id}
+                  className={
+                    'inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs ring-1 ' +
+                    (m.accepted === true ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-400/30' : 'bg-white/6 text-slate-300 ring-white/10')
+                  }
+                >
+                  <span className="min-w-0 truncate font-medium">{nameOf(m)}</span>
+                  {m.accepted === true ? (
+                    <span className="shrink-0">Accepted ✓</span>
+                  ) : (
+                    <span className="inline-flex shrink-0 items-center gap-1">
+                      <Clock className="size-3 motion-safe:animate-pulse" aria-hidden /> Waiting…
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : (
+          <>
+          {acceptedOthers.length > 0 ? (
+            <p
+              className="mb-3 flex items-center justify-center gap-2 rounded-2xl bg-emerald-400/10 px-3 py-2 text-center text-sm font-medium text-emerald-200 ring-1 ring-emerald-400/30"
+              role="status"
+              aria-live="polite"
+            >
+              <Check className="size-4 shrink-0" strokeWidth={3} aria-hidden />
+              <span className="min-w-0 break-words">
+                {amJoinNames(acceptedOthers) + ' accepted — tap Accept to ' + (allAccepted ? 'start' : 'join')}
+              </span>
+            </p>
+          ) : null}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <AmButton variant="secondary" size="lg" icon={SkipForward} onClick={onNext} disabled={busy} className="w-full scroll-mb-32 md:scroll-mb-8">Next</AmButton>
             <AmButton variant="success" size="lg" icon={Check} onClick={onAccept} loading={busy} data-autofocus className="w-full scroll-mb-32 md:scroll-mb-8">Accept</AmButton>
           </div>
+          </>
         )}
       </div>
     </motion.section>

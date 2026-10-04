@@ -131,15 +131,23 @@ describe('cooldowns', () => {
     members: ids.map((userId) => ({ userId, accepted })),
   });
 
-  it('blocks the same pair for 24h after a session', () => {
-    const cooldowns = amCreateCooldownIndex([session(['a', 'b'], 60)]);
-    expect(cooldowns.inPairCooldown('a', 'b', NOW)).toBe(true);
-    const old = amCreateCooldownIndex([session(['a', 'b'], 25 * 60)]);
-    expect(old.inPairCooldown('a', 'b', NOW)).toBe(false);
+  const declined = (ids, minsAgo) => ({
+    ...session(ids, minsAgo, 'declined'),
+    members: ids.map((userId, i) => ({ userId, accepted: i === 0 })),
   });
 
-  it('lifts after both users had 5 other matches', () => {
-    const hist = [session(['a', 'b'], 120)];
+  it('never blocks the same pair after a real session (unlimited rematching)', () => {
+    for (const mode of ['buddy', 'peers']) {
+      const cooldowns = amCreateCooldownIndex([session(['a', 'b'], 60), session(['a', 'b'], 30), session(['a', 'b'], 1)]);
+      expect(cooldowns.inPairCooldown('a', 'b', NOW, mode)).toBe(false);
+    }
+    // A decline still blocks for 24h.
+    expect(amCreateCooldownIndex([declined(['a', 'b'], 60)]).inPairCooldown('a', 'b', NOW)).toBe(true);
+    expect(amCreateCooldownIndex([declined(['a', 'b'], 25 * 60)]).inPairCooldown('a', 'b', NOW)).toBe(false);
+  });
+
+  it('decline cooldown lifts after both users had 5 other matches', () => {
+    const hist = [declined(['a', 'b'], 120)];
     for (let i = 0; i < 5; i++) hist.push(session(['a', `x${i}`], 100 - i), session(['b', `y${i}`], 100 - i));
     expect(amCreateCooldownIndex(hist).inPairCooldown('a', 'b', NOW)).toBe(false);
     const partial = hist.filter((p) => !p.members.some((m) => m.userId.startsWith('y')));
@@ -164,18 +172,25 @@ describe('cooldowns', () => {
     expect(cd.inPairCooldown('a', 'c', NOW, 'peers')).toBe(true);
   });
 
-  it('excluded from best buddy when in cooldown', () => {
+  it('excluded from best buddy only after a decline, not after a session', () => {
+    const a = amMakeUser({ id: 'a' });
+    const b = amMakeUser({ id: 'b', weak: ['English'], strong: ['Math'] });
+    expect(amBestBuddy(a, [b], ctx({ cooldowns: amCreateCooldownIndex([declined(['a', 'b'], 5)]) }))).toBeNull();
+    expect(amBestBuddy(a, [b], ctx({ cooldowns: amCreateCooldownIndex([session(['a', 'b'], 5)]) }))?.user.id).toBe('b');
+  });
+
+  it('a pair with an accepted session 5 minutes ago is matched again', () => {
     const a = amMakeUser({ id: 'a' });
     const b = amMakeUser({ id: 'b', weak: ['English'], strong: ['Math'] });
     const cooldowns = amCreateCooldownIndex([session(['a', 'b'], 5)]);
-    expect(amBestBuddy(a, [b], ctx({ cooldowns }))).toBeNull();
+    expect(amHardFilter(a, b, ctx({ cooldowns })).ok).toBe(true);
+    expect(amBestBuddy(a, [b], ctx({ cooldowns }))?.user.id).toBe('b');
   });
 
-  it('group rule: >= half of the group shared a session', () => {
-    const cd = amCreateCooldownIndex([{ ...session(['a', 'b'], 30), mode: 'peers' }]);
-    expect(cd.groupInCooldown(['a', 'b', 'c'], NOW)).toBe(true); // 2 of 3
-    expect(cd.groupInCooldown(['a', 'b', 'c', 'd'], NOW)).toBe(true); // 2 of 4
-    expect(cd.groupInCooldown(['a', 'b', 'c', 'd', 'e'], NOW)).toBe(false); // 2 of 5
+  it('group rule: accepted history never puts a group in cooldown', () => {
+    const cd = amCreateCooldownIndex([{ ...session(['a', 'b', 'c'], 30), mode: 'peers' }]);
+    expect(cd.groupInCooldown(['a', 'b', 'c'], NOW)).toBe(false); // 3 of 3
+    expect(cd.groupInCooldown(['a', 'b', 'c', 'd'], NOW)).toBe(false); // 3 of 4
     expect(cd.inPairCooldown('a', 'b', NOW, 'peers')).toBe(false);
   });
 });
@@ -345,12 +360,14 @@ describe('Property 13: empty overlap preserves legacy behavior', () => {
       );
 
   // Proposal history: mixed statuses, acceptance flags and ages (some older than the 24h cooldown).
+  // 'accepted' is excluded on purpose: unlimited rematching intentionally diverges from the frozen
+  // legacy oracle (accepted sessions no longer block). Decline/expire/pending behavior is unchanged.
   const historyArb = (ids) =>
     fc.array(
       fc.record({
         memberIds: fc.shuffledSubarray(ids, { minLength: 2, maxLength: Math.min(4, ids.length) }),
         accepted: fc.array(fc.constantFrom(true, false, null), { minLength: 4, maxLength: 4 }),
-        status: fc.constantFrom('accepted', 'declined', 'expired', 'pending'),
+        status: fc.constantFrom('declined', 'expired', 'pending'),
         mode: fc.constantFrom('buddy', 'peers'),
         agoMs: fc.integer({ min: 0, max: 26 * 60 * 60 * 1000 }),
       }),

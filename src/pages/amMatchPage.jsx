@@ -16,6 +16,7 @@ import { AmRadar } from '../components/amRadar.jsx';
 import { AmPreviewCard } from '../components/amPreviewCard.jsx';
 import { AmSwitch } from '../components/amField.jsx';
 import { amToast } from '../components/amToast.jsx';
+import { amJoinNames } from '../../shared/amMatchScore.js';
 
 const AM_MODES = [
   { id: 'buddy', title: 'Study Buddy', line: '1-on-1', icon: UserRound, blurb: 'A focused two-way swap with one partner.' },
@@ -71,7 +72,20 @@ export default function AmMatchPage() {
     q.start(mode, sameSchool);
   }
 
+  // One-time "you're matched" toast per proposal, once it is accepted by everyone.
+  const toastedProposal = useRef(null);
+  const proposalId = q.proposal?.id ?? null;
+  const everyoneAccepted =
+    !!q.proposal &&
+    (q.phase === 'starting' || q.proposal.status === 'accepted' || (q.proposal.members ?? []).every((m) => m.accepted === true));
+  useEffect(() => {
+    if (!proposalId || !everyoneAccepted || toastedProposal.current === proposalId) return;
+    toastedProposal.current = proposalId;
+    amToast.success("You're matched! Joining the session…");
+  }, [proposalId, everyoneAccepted]);
+
   const previewMembers = q.proposal?.members ?? [];
+  const matchedNames = amJoinNames(previewMembers.filter((m) => m.user_id !== user.id).map((m) => m.profile?.name ?? 'Student'));
   const expiresAt = q.proposal ? new Date(q.proposal.expires_at).getTime() : 0;
   const secondsLeft = Math.max(0, (expiresAt - now) / 1000);
   const searchSeconds = Math.floor((now - searchStart.current) / 1000);
@@ -113,7 +127,11 @@ export default function AmMatchPage() {
                 <AmCard className="flex flex-col items-center overflow-hidden px-4 text-center sm:px-6">
                   <AmRadar name={profile.name} avatarUrl={profile.avatar_url} subjects={[...profile.weak_subjects, ...profile.strong_subjects]} />
                   <h2 className="mt-6 text-lg font-semibold text-balance text-white sm:text-xl" aria-live="polite">
-                    {q.phase === 'starting' ? 'Starting your session…' : mode === 'peers' ? 'Gathering your study group…' : 'Looking for your match…'}
+                    {q.phase === 'starting'
+                      ? matchedNames
+                        ? 'Matched with ' + matchedNames + '! Starting your session…'
+                        : 'Starting your session…'
+                      : mode === 'peers' ? 'Gathering your study group…' : 'Looking for your match…'}
                   </h2>
                   <p className="mt-1 max-w-full text-sm text-balance break-words text-slate-400" aria-live="polite">
                     {q.waiting > 1 ? q.waiting + ' students searching right now' : 'Hang tight, this usually takes a few seconds'} · {searchSeconds}s
